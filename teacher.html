@@ -1,0 +1,2292 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin App - Teacher / Paper / Marksheet / Result Manager</title>
+<style>
+  :root{
+    --primary:#7a1e3a; --primary-dark:#59152a; --accent:#ff8c00;
+    --bg:#f6f2f4; --card:#ffffff; --border:#e3d6db;
+    --danger:#d9364a; --success:#1e8e5a; --text:#1b2430;
+  }
+  html[data-theme="dark"]{
+    --primary:#e0648a; --primary-dark:#c14d70; --accent:#ffab4d;
+    --bg:#170f13; --card:#241820; --border:#3a2530;
+    --danger:#ff6b7a; --success:#3ecf8e; --text:#f2e6ea;
+  }
+  html[data-theme="dark"] body{background:var(--bg);color:var(--text);}
+  html[data-theme="dark"] .card, html[data-theme="dark"] .modal-box, html[data-theme="dark"] .compare-box, html[data-theme="dark"] .stat-box, html[data-theme="dark"] .toggle-row{background:var(--card);border-color:var(--border);}
+  html[data-theme="dark"] input, html[data-theme="dark"] select, html[data-theme="dark"] textarea{background:#170f13;color:var(--text);border-color:var(--border);}
+  html[data-theme="dark"] table.list-table th{background:#2c1c25;}
+  html[data-theme="dark"] table.list-table th, html[data-theme="dark"] table.list-table td{border-color:var(--border);}
+  html[data-theme="dark"] .tab-btn{background:#2c1c25;color:var(--text);}
+  html[data-theme="dark"] .print-sheet{background:#fff;color:#1b2430;} /* Print हमेशा हल्के रंग में */
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);}
+  .topbar{background:linear-gradient(90deg,var(--primary),var(--primary-dark));color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+  .topbar h1{margin:0;font-size:20px;}
+  .btn{cursor:pointer;border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:600;}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover{background:var(--primary-dark);}
+  .btn-accent{background:var(--accent);color:#fff;}
+  .btn-outline{background:#fff;color:var(--primary);border:1px solid var(--primary);}
+  .btn-success{background:var(--success);color:#fff;}
+  .btn-danger{background:var(--danger);color:#fff;}
+  .btn-sm{padding:6px 10px;font-size:12px;border-radius:6px;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .screen{display:none;max-width:1150px;margin:20px auto;padding:0 16px;}
+  .screen.active{display:block;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 6px rgba(0,0,0,.04);}
+  .center-card{max-width:420px;margin:60px auto;}
+  label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px;color:#3a4658;}
+  input[type=text],input[type=password],input[type=number],select,textarea{
+    width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:#fbfcfe;
+  }
+  .row{display:flex;gap:10px;flex-wrap:wrap;}
+  .row > *{flex:1;min-width:150px;}
+  .tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .tab-btn{padding:8px 16px;border-radius:8px 8px 0 0;border:1px solid var(--border);background:#f1e6ea;cursor:pointer;font-weight:600;font-size:13px;position:relative;}
+  .tab-btn.active{background:var(--primary);color:#fff;}
+  .tab-badge{background:var(--danger);color:#fff;border-radius:20px;font-size:10px;padding:1px 6px;margin-left:6px;}
+  table.list-table{width:100%;border-collapse:collapse;font-size:13px;}
+  table.list-table th,table.list-table td{border:1px solid var(--border);padding:8px;text-align:left;vertical-align:top;}
+  table.list-table th{background:#f1e6ea;}
+  .msg{padding:10px 14px;border-radius:8px;font-size:13px;margin:10px 0;}
+  .msg-error{background:#fde8ea;color:var(--danger);border:1px solid #f7c3ca;}
+  .msg-success{background:#e6f6ee;color:var(--success);border:1px solid #b9e6cf;}
+  .back-link{display:inline-block;margin-bottom:14px;color:var(--primary);cursor:pointer;font-weight:600;font-size:14px;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px;}
+  .modal-box{background:#fff;border-radius:12px;padding:20px;max-width:760px;width:100%;max-height:85vh;overflow:auto;}
+  .footer-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;}
+  .subject-row{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:center;margin-bottom:6px;}
+  #editorAreaModal{min-height:250px;border:1px solid var(--border);border-radius:8px;padding:16px;background:#fff;outline:none;}
+  .toolbar{display:flex;gap:6px;flex-wrap:wrap;background:#f1e6ea;border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:8px;}
+  .toolbar button{border:1px solid var(--border);background:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px;}
+  .toolbar input[type=color]{width:34px;height:32px;border:1px solid var(--border);border-radius:6px;padding:0;}
+  .hidden{display:none !important;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge-pass{background:#e6f6ee;color:var(--success);}
+  .badge-fail{background:#fde8ea;color:var(--danger);}
+  .badge-pending{background:#fff3e0;color:#b26a00;}
+  .badge-accepted{background:#e6f6ee;color:var(--success);}
+  .badge-rejected{background:#fde8ea;color:var(--danger);}
+  .badge-public{background:#e6f6ee;color:var(--success);}
+  .badge-private{background:#eee;color:#555;}
+  .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;}
+  .compare-box{border:1px solid var(--border);border-radius:10px;padding:14px;background:#fbfcfe;}
+  .compare-box h4{margin:0 0 10px;color:var(--primary-dark);font-size:14px;border-bottom:1px solid var(--border);padding-bottom:6px;}
+  .compare-box .kv{font-size:13px;margin:4px 0;display:flex;justify-content:space-between;gap:8px;}
+  .compare-box .kv b{color:#3a4658;}
+  .no-match{color:var(--danger);font-weight:600;font-size:13px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:10px;}
+  .stat-box{background:#fbfcfe;border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
+  .stat-box .num{font-size:22px;font-weight:800;color:var(--primary);}
+  .stat-box .lbl{font-size:12px;color:#666;}
+
+  #printArea{display:none;}
+  .print-sheet{max-width:800px;margin:0 auto;padding:30px;border:2px solid #333;font-family:'Times New Roman',serif;}
+  .print-sheet h2{text-align:center;margin:0 0 4px;color:#7a1e3a;}
+  .print-sheet .sub{text-align:center;font-size:13px;margin-bottom:14px;color:#555;}
+  .print-sheet table{width:100%;border-collapse:collapse;margin-top:10px;}
+  .print-sheet table td,.print-sheet table th{border:1px solid #333;padding:6px 8px;font-size:14px;}
+  .print-details{display:flex;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px;font-size:14px;}
+  .print-details div{width:48%;padding:2px 0;}
+  .result-badge{font-weight:bold;font-size:18px;text-align:center;margin-top:14px;padding:8px;border-radius:6px;}
+  .result-pass{background:#e6f6ee;color:var(--success);}
+  .result-fail{background:#fde8ea;color:var(--danger);}
+  .sign-row{display:flex;justify-content:space-between;margin-top:50px;font-size:13px;}
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{display:block;position:absolute;top:0;left:0;width:100%;}
+    *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
+  }
+  .print-sheet{position:relative;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .print-watermark{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
+    font-size:46px;font-weight:800;color:rgba(122,30,58,0.16);white-space:nowrap;pointer-events:none;
+    z-index:0;user-select:none;letter-spacing:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  .print-sheet > *:not(.print-watermark){position:relative;z-index:1;}
+  .print-top-teacher-line{font-size:12px;font-weight:700;color:#7a1e3a;text-align:center;border-bottom:1px dashed #d6b7c2;padding-bottom:6px;margin-bottom:8px;}
+
+  /* ---- App Control / Settings tab ---- */
+  .toggle-row{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:12px;background:#fbfcfe;}
+  .toggle-row .ttl{font-weight:700;color:var(--primary-dark);font-size:14px;}
+  .toggle-row .desc{font-size:12px;color:#666;margin-top:3px;}
+  .switch{position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:28px;transition:.2s;}
+  .slider:before{position:absolute;content:"";height:22px;width:22px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
+  .switch input:checked + .slider{background:var(--success);}
+  .switch input:checked + .slider:before{transform:translateX(24px);}
+  .switch input:disabled + .slider{opacity:.6;cursor:not-allowed;}
+  .btn-google{
+    background:#fff;color:#3c4043;border:1px solid #e3d6db;
+    display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  }
+  .btn-google:hover{background:#faf6f7;}
+  .btn-google svg{width:18px;height:18px;}
+  .divider-or{display:flex;align-items:center;gap:10px;color:#8892a0;font-size:12px;margin:12px 0;}
+  .divider-or::before,.divider-or::after{content:"";flex:1;height:1px;background:var(--border);}
+  .load-more-wrap{text-align:center;margin-top:14px;}
+</style>
+</head>
+<body>
+<script>
+  (function(){
+    try{
+      const saved = localStorage.getItem("psb_theme");
+      if(saved === "dark") document.documentElement.setAttribute("data-theme", "dark");
+    }catch(e){}
+  })();
+</script>
+
+<div class="topbar">
+  <h1>🛡 Admin App</h1>
+  <div id="topbarUser" class="msg" style="background:transparent;color:#fff;"></div>
+  <button class="btn btn-outline btn-sm" id="themeToggleBtn" onclick="toggleTheme()" title="Dark/Light Theme">🌙</button>
+  <button class="btn btn-outline btn-sm hidden" id="logoutBtn" onclick="logoutAdmin()">Logout</button>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div class="screen active" id="screenAdminLogin">
+  <div class="card center-card">
+    <h2 style="text-align:center;color:var(--primary-dark);">Admin Login</h2>
+    <p style="text-align:center;font-size:12px;color:#888;">Admin अकाउंट सिर्फ Firebase Console से मैन्युअल रूप से बनाए जाते हैं — यहाँ से नया Admin Register नहीं किया जा सकता।</p>
+    <div id="loginMsg"></div>
+    <label>Email Address</label>
+    <input type="text" id="loginEmail" placeholder="Admin का Email">
+    <label>Password</label>
+    <input type="password" id="loginPassword">
+    <div class="footer-actions" style="justify-content:center;">
+      <button class="btn btn-primary" style="width:100%;" onclick="handleAdminLogin()">Login</button>
+    </div>
+    <div class="divider-or">OR</div>
+    <button class="btn btn-google" onclick="loginAdminWithGoogle()">
+      <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.4 0 10.3-1.9 14.1-5.3l-6.5-5.5C29.5 34.8 26.9 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5c3.3 6.5 10 11 17.8 11z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.3-4.1 5.7l6.5 5.5C41.6 35.9 44 30.3 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+      Login with Google
+    </button>
+    <div style="text-align:center;margin-top:14px;">
+      <button class="link-btn" style="background:none;border:none;color:var(--primary);cursor:pointer;font-weight:600;font-size:13px;" onclick="openAdminForgotPassword()">Forgot Password?</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN FORGOT PASSWORD -->
+<div class="screen" id="screenAdminForgotPassword">
+  <div class="card center-card">
+    <span class="back-link" onclick="showScreen('screenAdminLogin')">&larr; Login पर वापस जाएं</span>
+    <h2 style="text-align:center;color:var(--primary-dark);">Forgot Password</h2>
+    <div id="afpMsg"></div>
+    <label>Registered Email Address</label>
+    <input type="text" id="afpEmail" placeholder="Admin का Email">
+    <div class="footer-actions" style="justify-content:center;">
+      <button class="btn btn-primary" style="width:100%;" onclick="submitAdminForgotPassword()">Send Reset Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div class="screen" id="screenAdminDashboard">
+  <div class="tabs">
+    <div class="tab-btn active" id="tabTeachers" onclick="switchTab('teachers')">👩‍🏫 Teachers</div>
+    <div class="tab-btn" id="tabHeadmasters" onclick="switchTab('headmasters')">🏫 Headmasters</div>
+    <div class="tab-btn" id="tabStudentApp" onclick="switchTab('studentAppUsers')">🎓 Students</div>
+    <div class="tab-btn" id="tabPapers" onclick="switchTab('papers')">📄 Papers</div>
+    <div class="tab-btn" id="tabNotes" onclick="switchTab('notes')">🗒️ Notes</div>
+    <div class="tab-btn" id="tabMarksheets" onclick="switchTab('marksheets')">📝 Mark Sheets</div>
+    <div class="tab-btn" id="tabTestResults" onclick="switchTab('testResults')">🧮 Test Results</div>
+    <div class="tab-btn" id="tabCards" onclick="switchTab('idCards')">🪪 Cards</div>
+    <div class="tab-btn" id="tabBanned" onclick="switchTab('banned')">⛔ Banned</div>
+    <div class="tab-btn" id="tabPlans" onclick="switchTab('plans')">💳 Plan Control</div>
+    <div class="tab-btn" id="tabPayments" onclick="switchTab('payments')">🧾 Payment Requests</div>
+    <div class="tab-btn" id="tabReferrals" onclick="switchTab('referrals')">🎁 Referrals</div>
+    <div class="tab-btn" id="tabPasswordReq" onclick="switchTab('passwordReq')">🔑 Password Requests</div>
+    <div class="tab-btn" id="tabAnnouncements" onclick="switchTab('announcements')">📢 महत्वपूर्ण सूचना</div>
+    <div class="tab-btn" id="tabDoubtReports" onclick="switchTab('doubtReports')">🚩 Doubt Reports</div>
+    <div class="tab-btn" id="tabSettings" onclick="switchTab('settings')">⚙️ App Control</div>
+  </div>
+
+  <div class="card" id="listControlsCard">
+    <p style="font-size:12px;color:#888;margin:0 0 8px;" id="pageHintText">Data 20-20 के Pages में Load होता है। Search सिर्फ अभी तक Load हुए records में काम करता है — पूरे डेटा में खोजने के लिए "Load More" दबाते रहें।</p>
+    <div class="row">
+      <input type="text" id="searchBox" placeholder="Search (अभी Load हुए records में)..." oninput="renderCurrentTab()">
+      <button class="btn btn-danger" id="deleteAllBtn" onclick="deleteAllCurrentTab()">🗑 Delete All Loaded</button>
+    </div>
+    <div id="listWrap" style="margin-top:14px;overflow-x:auto;"></div>
+    <div class="load-more-wrap" id="loadMoreWrap">
+      <button class="btn btn-outline" id="loadMoreBtn" onclick="loadMoreCurrentTab()">और Load करें (Load More)</button>
+      <div id="loadMoreStatus" style="font-size:12px;color:#888;margin-top:6px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Generic View Modal / Edit Modal container injected dynamically -->
+<div id="modalRoot"></div>
+
+<div id="printArea"></div>
+
+<script type="module">
+/* =====================================================================
+   ADMIN APP - PART 1: FIREBASE INIT + ADMIN AUTH (Firebase Auth + role check)
+   ===================================================================== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs,
+  query, where, orderBy, limit, startAfter, updateDoc, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword, GoogleAuthProvider,
+  signInWithPopup, sendPasswordResetEmail, signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAVccywI4eCzbc1eg6cy2qZaEeYUx0qi2w",
+  authDomain: "chatting-app-2047e.firebaseapp.com",
+  projectId: "chatting-app-2047e",
+  storageBucket: "chatting-app-2047e.firebasestorage.app",
+  messagingSenderId: "641783644815",
+  appId: "1:641783644815:web:9a392923b2213f432ca6fa"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+const fs = { doc, getDoc, setDoc, collection, addDoc, getDocs, query, where, orderBy, limit, startAfter, updateDoc, deleteDoc };
+
+/* ===================== DARK / LIGHT THEME ===================== */
+window.toggleTheme = function(){
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  if(isDark){ document.documentElement.removeAttribute("data-theme"); localStorage.setItem("psb_theme","light"); }
+  else { document.documentElement.setAttribute("data-theme","dark"); localStorage.setItem("psb_theme","dark"); }
+  updateThemeIcon();
+};
+function updateThemeIcon(){
+  document.getElementById("themeToggleBtn").textContent = document.documentElement.getAttribute("data-theme") === "dark" ? "☀️" : "🌙";
+}
+updateThemeIcon();
+
+// IMPORTANT: Admin accounts are NEVER created from this app. There is no
+// registration code and no self-signup path. The only way to become an
+// Admin is for someone with access to the Firebase Console to:
+//   1) Create a user under Authentication -> Users (Email/Password or Google)
+//   2) Create a Firestore document at  admins/{that user's UID}  with at
+//      least a `name` field.
+// Signing in here only grants the dashboard if a matching admins/{uid}
+// document exists — simply having a valid Firebase Auth session (e.g. from
+// the Teacher App, which shares this same Firebase project) is NOT enough.
+let currentAdmin = null;
+
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+window.showScreen = showScreen; // [फिक्स] यह एक जगह inline onclick से भी बुलाया जाता है
+// (Login पर वापस जाएं) — module Script के अंदर plain function window पर अपने-आप नहीं चढ़ता,
+// इसलिए inline onclick="showScreen(...)" पहले टूट जाता।
+
+onAuthStateChanged(auth, async (user) => {
+  if(!user){
+    currentAdmin = null;
+    document.getElementById("topbarUser").textContent = "";
+    document.getElementById("logoutBtn").classList.add("hidden");
+    const activeId = document.querySelector(".screen.active")?.id;
+    if(activeId !== "screenAdminForgotPassword"){
+      showScreen("screenAdminLogin");
+    }
+    return;
+  }
+
+  try{
+    const adminSnap = await fs.getDoc(fs.doc(db, "admins", user.uid));
+    if(adminSnap.exists()){
+      currentAdmin = { uid: user.uid, ...adminSnap.data() };
+      adminLoginSuccess();
+    } else {
+      // Signed into Firebase Auth (maybe a Teacher, or a Google account with
+      // no admin record) but NOT an authorized admin -> deny and sign out.
+      await signOut(auth);
+      document.getElementById("loginMsg").innerHTML =
+        '<div class="msg msg-error">यह अकाउंट Admin के तौर पर Authorize नहीं है। कृपया किसी Admin से संपर्क करें।</div>';
+      showScreen("screenAdminLogin");
+    }
+  }catch(err){
+    console.error(err);
+    showScreen("screenAdminLogin");
+  }
+});
+
+window.handleAdminLogin = async function(){
+  const email = document.getElementById("loginEmail").value.trim();
+  const pw = document.getElementById("loginPassword").value;
+  const msgBox = document.getElementById("loginMsg");
+  msgBox.innerHTML = "";
+
+  if(!email || !pw){
+    msgBox.innerHTML = '<div class="msg msg-error">कृपया Email और Password दोनों भरें</div>';
+    return;
+  }
+  try{
+    await signInWithEmailAndPassword(auth, email, pw);
+    document.getElementById("loginPassword").value = "";
+    // onAuthStateChanged handles the admins/{uid} role check + routing
+  }catch(err){
+    if(err.code === "auth/wrong-password" || err.code === "auth/invalid-credential" || err.code === "auth/user-not-found"){
+      msgBox.innerHTML = '<div class="msg msg-error">गलत Email या Password</div>';
+    } else {
+      msgBox.innerHTML = '<div class="msg msg-error">Error: ' + err.message + '</div>';
+    }
+  }
+};
+
+window.loginAdminWithGoogle = async function(){
+  try{
+    await signInWithPopup(auth, googleProvider);
+    // onAuthStateChanged handles the admins/{uid} role check + routing
+  }catch(err){
+    document.getElementById("loginMsg").innerHTML = '<div class="msg msg-error">Google Login Error: ' + err.message + '</div>';
+  }
+};
+
+window.openAdminForgotPassword = function(){
+  document.getElementById("afpMsg").innerHTML = "";
+  document.getElementById("afpEmail").value = "";
+  showScreen("screenAdminForgotPassword");
+};
+
+window.submitAdminForgotPassword = async function(){
+  const email = document.getElementById("afpEmail").value.trim();
+  const msgBox = document.getElementById("afpMsg");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    msgBox.innerHTML = '<div class="msg msg-error">कृपया सही Email Address डालें</div>';
+    return;
+  }
+  try{
+    await sendPasswordResetEmail(auth, email);
+  }catch(err){ /* ignore - avoid confirming/denying account existence */ }
+  msgBox.innerHTML = '<div class="msg msg-info">अगर यह Email किसी Admin अकाउंट से जुड़ा है, तो Reset Link भेज दिया गया है ✅</div>';
+};
+
+function adminLoginSuccess(){
+  document.getElementById("topbarUser").textContent = "👤 " + (currentAdmin.name || "Admin");
+  document.getElementById("logoutBtn").classList.remove("hidden");
+  showScreen("screenAdminDashboard");
+  loadPremiumPlans(); // ताकि Teachers tab पर "Plan बदलें" वाला dropdown शुरू से ही तैयार रहे
+  switchTab("teachers");
+}
+
+window.logoutAdmin = async function(){
+  await signOut(auth);
+  currentAdmin = null;
+  document.getElementById("loginEmail").value = "";
+  document.getElementById("loginPassword").value = "";
+  document.getElementById("topbarUser").textContent = "";
+  document.getElementById("logoutBtn").classList.add("hidden");
+  showScreen("screenAdminLogin");
+};
+
+
+/* =====================================================================
+   ADMIN APP - PART 2: PAGINATED DATA LOADING (Teachers / Papers / Mark Sheets / Test Results)
+   Replaces the old loadAllData() which downloaded the entire database in
+   one shot. Each tab now loads 20 records at a time via limit()+startAfter(),
+   with a "Load More" button to fetch the next page.
+   ===================================================================== */
+let allTeachers = [], allHeadmasters = [], allPapers = [], allNotes = [], allMarksheets = [], allTestResults = [], allStudentAppUsers = [], allIdCards = [];
+let currentTab = "teachers";
+
+const pageInfo = {
+  teachers:    { lastDoc: null, hasMore: true, loading: false },
+  headmasters: { lastDoc: null, hasMore: true, loading: false },
+  papers:      { lastDoc: null, hasMore: true, loading: false },
+  notes:       { lastDoc: null, hasMore: true, loading: false },
+  marksheets:  { lastDoc: null, hasMore: true, loading: false },
+  testResults: { lastDoc: null, hasMore: true, loading: false },
+  studentAppUsers: { lastDoc: null, hasMore: true, loading: false },
+  idCards:     { lastDoc: null, hasMore: true, loading: false }
+};
+const PAGE_SIZE = 20;
+
+function getTabArray(tab){
+  if(tab === "teachers") return allTeachers;
+  if(tab === "headmasters") return allHeadmasters;
+  if(tab === "papers") return allPapers;
+  if(tab === "notes") return allNotes;
+  if(tab === "marksheets") return allMarksheets;
+  if(tab === "testResults") return allTestResults;
+  if(tab === "studentAppUsers") return allStudentAppUsers;
+  if(tab === "idCards") return allIdCards;
+  return [];
+}
+// [बदलाव 11] टीचर का Plan/Type देखने के लिए साझा हेल्पर — Teacher App के isPremium() जैसा ही लॉजिक
+function isTeacherPremium(t){
+  if(!t || t.plan !== "premium") return false;
+  if(t.premiumUntil) return new Date(t.premiumUntil).getTime() > Date.now();
+  return true; // premiumUntil खाली मतलब हमेशा के लिए (Admin ने मैन्युअली दिया)
+}
+function teacherPrintTotal(t){
+  return (t.papersCount||0) + (t.notesCount||0) + (t.marksheetsCount||0) + (t.testResultsCount||0) + (t.cardsCount||0);
+}
+function setTabArray(tab, arr){
+  if(tab === "teachers") allTeachers = arr;
+  else if(tab === "headmasters") allHeadmasters = arr;
+  else if(tab === "papers") allPapers = arr;
+  else if(tab === "notes") allNotes = arr;
+  else if(tab === "marksheets") allMarksheets = arr;
+  else if(tab === "testResults") allTestResults = arr;
+  else if(tab === "studentAppUsers") allStudentAppUsers = arr;
+  else if(tab === "idCards") allIdCards = arr;
+}
+
+async function loadTabPage(tab, reset){
+  const info = pageInfo[tab];
+  if(reset){
+    info.lastDoc = null;
+    info.hasMore = true;
+    setTabArray(tab, []);
+  }
+  if(!info.hasMore || info.loading) { updateLoadMoreUI(); renderCurrentTab(); return; }
+
+  info.loading = true;
+  updateLoadMoreUI();
+  try{
+    let qRef = info.lastDoc
+      ? fs.query(fs.collection(db, tab), fs.orderBy("createdAt", "desc"), fs.startAfter(info.lastDoc), fs.limit(PAGE_SIZE))
+      : fs.query(fs.collection(db, tab), fs.orderBy("createdAt", "desc"), fs.limit(PAGE_SIZE));
+
+    const snap = await fs.getDocs(qRef);
+    const newDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    setTabArray(tab, getTabArray(tab).concat(newDocs));
+    info.lastDoc = snap.docs.length ? snap.docs[snap.docs.length - 1] : info.lastDoc;
+    info.hasMore = snap.docs.length === PAGE_SIZE;
+  }catch(err){
+    console.error(err);
+    alert("Data Load Error: " + err.message);
+  }
+  info.loading = false;
+  updateLoadMoreUI();
+  renderCurrentTab();
+}
+
+window.loadMoreCurrentTab = function(){
+  loadTabPage(currentTab, false);
+};
+
+function updateLoadMoreUI(){
+  const info = pageInfo[currentTab];
+  const btn = document.getElementById("loadMoreBtn");
+  const status = document.getElementById("loadMoreStatus");
+  if(!btn || !status) return;
+  btn.classList.toggle("hidden", !info.hasMore);
+  btn.disabled = info.loading;
+  btn.textContent = info.loading ? "Load हो रहा है..." : "और Load करें (Load More)";
+  status.textContent = getTabArray(currentTab).length + " records अभी तक Load हुए" + (info.hasMore ? "" : " — सभी Load हो गए");
+}
+
+/* =====================================================================
+   ADMIN APP - PART 2b: APP CONTROL (live sync to Teacher App & Student App)
+   Doc: appSettings/global
+     teacherAppEnabled       -> पूरा Teacher App चालू/बंद
+     studentAppEnabled       -> पूरा Student App चालू/बंद
+     resultSubmissionOpen    -> Teacher, बच्चों के Result Save/Confirm कर सकें या नहीं
+     globalFreePrintLimit    -> [बदलाव 42] डिफ़ॉल्ट Free Print Limit (हर नए/सामान्य Teacher के लिए)
+   ===================================================================== */
+let appSettings = { teacherAppEnabled: true, studentAppEnabled: true, headmasterAppEnabled: true, resultSubmissionOpen: false, globalFreePrintLimit: 10 };
+
+let appSettingsLoadError = null;
+
+async function loadAppSettings(){
+  appSettingsLoadError = null;
+  try{
+    const snap = await fs.getDoc(fs.doc(db, "appSettings", "global"));
+    const data = snap.exists() ? snap.data() : {};
+    appSettings = {
+      teacherAppEnabled: data.teacherAppEnabled !== false,
+      studentAppEnabled: data.studentAppEnabled !== false,
+      headmasterAppEnabled: data.headmasterAppEnabled !== false,
+      resultSubmissionOpen: data.resultSubmissionOpen === true,
+      globalFreePrintLimit: typeof data.globalFreePrintLimit === "number" ? data.globalFreePrintLimit : 10
+    };
+  }catch(err){
+    console.error("loadAppSettings error:", err);
+    appSettingsLoadError = err.message || String(err);
+  }
+}
+
+/* =====================================================================
+   [बदलाव 42] टीचर चुनने वाला Reusable Picker — Free Print Limit और
+   महत्वपूर्ण सूचना दोनों में इस्तेमाल होता है। Search करके एक या ज़्यादा
+   Teacher चुने जा सकते हैं (Checkbox से)।
+   ===================================================================== */
+let teacherPickerList = [];
+async function loadTeacherPickerList(){
+  try{
+    const snap = await fs.getDocs(fs.collection(db, "teachers"));
+    teacherPickerList = snap.docs.map(d => ({ id: d.id, name: d.data().name || "-", regNo: d.data().registrationNumber || d.id }));
+    teacherPickerList.sort((a,b) => (a.name||"").localeCompare(b.name||""));
+  }catch(err){
+    console.error("loadTeacherPickerList error:", err);
+    teacherPickerList = [];
+  }
+}
+
+function renderTeacherPickerHtml(idPrefix){
+  return `
+    <input type="text" id="${idPrefix}Search" placeholder="Teacher खोजें (नाम या Reg No)..." oninput="filterTeacherPicker('${idPrefix}')">
+    <div id="${idPrefix}List" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px;margin-top:6px;">
+      ${teacherPickerList.length ? teacherPickerList.map(t => `
+        <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-weight:normal;">
+          <input type="checkbox" class="${idPrefix}Chk" value="${escapeAttr(t.regNo)}" style="width:auto;">
+          <span>${escapeHtml(t.name)} <span style="color:#888;font-size:12px;">(${escapeHtml(t.regNo)})</span></span>
+        </label>
+      `).join("") : `<p style="color:#888;font-size:13px;">कोई Teacher नहीं मिला।</p>`}
+    </div>
+  `;
+}
+
+window.filterTeacherPicker = function(idPrefix){
+  const search = (document.getElementById(idPrefix + "Search").value || "").toLowerCase();
+  document.querySelectorAll(`#${idPrefix}List label`).forEach(label => {
+    label.style.display = label.textContent.toLowerCase().includes(search) ? "" : "none";
+  });
+};
+
+function getSelectedTeacherRegNos(idPrefix){
+  return Array.from(document.querySelectorAll(`.${idPrefix}Chk:checked`)).map(el => el.value);
+}
+
+
+function renderSettingsTab(wrap){
+  const errorBox = appSettingsLoadError
+    ? `<div class="msg msg-error">App Control Data Load नहीं हो पाया: ${escapeHtml(appSettingsLoadError)}<br>
+        <span style="font-size:11px;">अगर यह पहली बार हो रहा है, तो Firestore Security Rules में "appSettings" collection के लिए Admin को Read/Write की Permission देना ज़रूरी है।</span>
+        <div style="margin-top:8px;"><button class="btn btn-outline btn-sm" onclick="switchTab('settings')">🔄 Retry</button></div>
+       </div>`
+    : "";
+  wrap.innerHTML = `
+    <h3 style="margin-top:0;color:var(--primary-dark);">App Control</h3>
+    <p style="font-size:13px;color:#666;margin-top:-6px;">यहाँ से किए गए बदलाव तुरंत Teacher App और Student App में लागू हो जाते हैं।</p>
+    ${errorBox}
+
+    <div class="toggle-row">
+      <div>
+        <div class="ttl">📘 Teacher App</div>
+        <div class="desc">बंद करने पर सभी Teacher तुरंत Log-out जैसी स्थिति में आ जाएंगे और App इस्तेमाल नहीं कर पाएंगे।</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" ${appSettings.teacherAppEnabled ? "checked" : ""} onchange="toggleAppSetting('teacherAppEnabled', this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="ttl">🎓 Student App</div>
+        <div class="desc">बंद करने पर बच्चे Student App में Result/Mark Sheet नहीं देख पाएंगे।</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" ${appSettings.studentAppEnabled ? "checked" : ""} onchange="toggleAppSetting('studentAppEnabled', this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="ttl">🏫 Headmaster App</div>
+        <div class="desc">बंद करने पर सभी Headmaster तुरंत Log-out जैसी स्थिति में आ जाएंगे और App इस्तेमाल नहीं कर पाएंगे।</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" ${appSettings.headmasterAppEnabled ? "checked" : ""} onchange="toggleAppSetting('headmasterAppEnabled', this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="ttl">🧮 Result Submission</div>
+        <div class="desc">चालू (Open) करने पर ही Teacher, बच्चों के Test Result Save / Confirm / Public कर पाएंगे। डिफ़ॉल्ट रूप से यह बंद रहता है।</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" ${appSettings.resultSubmissionOpen ? "checked" : ""} onchange="toggleAppSetting('resultSubmissionOpen', this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- [बदलाव 42] Free Print Limit Control -->
+    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+    <h3 style="margin-top:0;color:var(--primary-dark);">🖨 Free Print Limit</h3>
+    <p style="font-size:13px;color:#666;margin-top:-6px;">यह Limit ख़त्म होने पर Free Teacher को Premium लेने को कहा जाता है।</p>
+
+    <label>सभी के लिए Default Limit (जब तक किसी को अलग से न बदला जाए)</label>
+    <div class="row" style="align-items:flex-end;">
+      <div><input type="number" id="globalFreeLimitInput" value="${appSettings.globalFreePrintLimit}"></div>
+      <div><button class="btn btn-outline btn-sm" onclick="saveGlobalFreeLimit()">Save करें</button></div>
+    </div>
+
+    <label style="margin-top:16px;">किसी ख़ास Teacher(s) की Limit अलग से बढ़ाएं/घटाएं</label>
+    <div id="freeLimitPickerWrap">${renderTeacherPickerHtml("flPick")}</div>
+    <div class="row" style="align-items:flex-end;margin-top:8px;">
+      <div><label>नई Limit</label><input type="number" id="individualFreeLimitInput" placeholder="जैसे: 25"></div>
+      <div><button class="btn btn-primary btn-sm" onclick="applyIndividualFreeLimit()">चुने हुए Teachers पर लागू करें</button></div>
+    </div>
+  `;
+  loadTeacherPickerList().then(() => {
+    const wrap = document.getElementById("freeLimitPickerWrap");
+    if(wrap) wrap.innerHTML = renderTeacherPickerHtml("flPick");
+  });
+}
+
+window.saveGlobalFreeLimit = async function(){
+  const val = Number(document.getElementById("globalFreeLimitInput").value);
+  if(!val || val < 0){ alert("कृपया सही Limit डालें"); return; }
+  appSettings.globalFreePrintLimit = val;
+  try{
+    await fs.setDoc(fs.doc(db, "appSettings", "global"), appSettings, { merge: true });
+    alert("Default Free Print Limit अपडेट हो गई ✅ (सभी Teachers में लागू होगी, जिनकी अलग से Limit सेट नहीं है)");
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+window.applyIndividualFreeLimit = async function(){
+  const val = Number(document.getElementById("individualFreeLimitInput").value);
+  const regNos = getSelectedTeacherRegNos("flPick");
+  if(!val || val < 0){ alert("कृपया सही Limit डालें"); return; }
+  if(regNos.length === 0){ alert("कृपया कम से कम एक Teacher चुनें"); return; }
+  try{
+    await Promise.all(regNos.map(regNo => fs.updateDoc(fs.doc(db, "teachers", regNo), { freePrintLimitOverride: val })));
+    alert(regNos.length + " Teacher(s) की Free Print Limit " + val + " कर दी गई ✅");
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+window.toggleAppSetting = async function(key, value){
+  appSettings[key] = value;
+  try{
+    await fs.setDoc(fs.doc(db, "appSettings", "global"), appSettings, { merge: true });
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+  renderSettingsTab(document.getElementById("listWrap"));
+};
+
+
+/* =====================================================================
+   ADMIN APP - PART 2c: PLAN CONTROL (Premium Plans जो Teacher App में दिखते हैं)
+   Firestore Collection: "premiumPlans" — यही Collection Teacher App अपनी
+   Upgrade स्क्रीन पर live पढ़ता है (onSnapshot से)। यहाँ से Add/Edit/Delete
+   किए गए Plan तुरंत Teacher App में दिखने लगते/बंद हो जाते हैं।
+   ===================================================================== */
+let premiumPlansList = [];
+
+async function loadPremiumPlans(){
+  try{
+    const snap = await fs.getDocs(fs.query(fs.collection(db, "premiumPlans"), fs.orderBy("sortOrder", "asc")));
+    premiumPlansList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }catch(err){
+    console.error("loadPremiumPlans error:", err);
+    premiumPlansList = [];
+  }
+}
+
+function renderPlansTab(wrap){
+  wrap.innerHTML = `
+    <h3 style="margin-top:0;color:var(--primary-dark);">💳 Plan Control</h3>
+    <p style="font-size:13px;color:#666;margin-top:-6px;">यहाँ जोड़े गए Plan ही Teacher App की Upgrade स्क्रीन पर दिखेंगे — Add/Edit/Delete यहीं से होगा। हर Plan में अपना UPI QR Code भी लगा सकते हैं — Teacher App में वही QR, उसी Plan की कीमत के साथ दिखेगा।</p>
+    <div class="footer-actions" style="justify-content:flex-start;">
+      <button class="btn btn-primary btn-sm" onclick="openPlanEditor(null)">+ नया Plan जोड़ें</button>
+    </div>
+    <table class="list-table" style="margin-top:14px;">
+      <tr><th>Name</th><th>Price (₹)</th><th>Duration (दिन)</th><th>QR Code</th><th>Order</th><th>Active</th><th>Action</th></tr>
+      ${premiumPlansList.length ? premiumPlansList.map(p => `
+        <tr>
+          <td>${escapeHtml(p.name)}</td>
+          <td>₹${p.price}</td>
+          <td>${p.durationDays} दिन</td>
+          <td>${p.qrImageDataUrl ? `<img src="${p.qrImageDataUrl}" style="width:34px;height:34px;object-fit:contain;border:1px solid var(--border);border-radius:4px;background:#fff;">` : "<span style='color:#999;'>—</span>"}</td>
+          <td>${p.sortOrder ?? 0}</td>
+          <td><span class="badge ${p.active !== false ? 'badge-pass' : 'badge-fail'}">${p.active !== false ? 'Active' : 'Inactive'}</span></td>
+          <td>
+            <button class="btn btn-outline btn-sm" onclick="openPlanEditor('${p.id}')">Edit</button>
+            <button class="btn btn-outline btn-sm" onclick="togglePlanActive('${p.id}')">${p.active !== false ? 'Deactivate' : 'Activate'}</button>
+            <button class="btn btn-danger btn-sm" onclick="deletePremiumPlan('${p.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join("") : `<tr><td colspan="7" style="text-align:center;color:#888;">अभी कोई Plan नहीं जोड़ा गया — ऊपर "+ नया Plan जोड़ें" दबाएँ।</td></tr>`}
+    </table>
+  `;
+}
+
+window.openPlanEditor = function(planId){
+  const p = planId ? premiumPlansList.find(x => x.id === planId) : null;
+  const html = `
+    <h3>${p ? "Plan Edit करें" : "नया Plan जोड़ें"}</h3>
+    <label>Plan का नाम</label>
+    <input type="text" id="planName" value="${escapeAttr(p ? p.name : "")}" placeholder="जैसे: Monthly, Yearly, 3-Month Offer">
+    <label>कीमत (₹)</label>
+    <input type="number" id="planPrice" value="${p ? p.price : ""}" placeholder="जैसे: 15">
+    <label>अवधि (कितने दिनों के लिए Premium मिलेगा)</label>
+    <input type="number" id="planDuration" value="${p ? p.durationDays : ""}" placeholder="जैसे: 30 (महीना), 365 (साल)">
+    <!-- [बदलाव 33] हर Plan का अपना Payment Link — WhatsApp Link, razorpay.me या कोई भी Link हो सकता है -->
+    <label>Payment Link (WhatsApp/Razorpay/कोई भी Link — Buy बटन दबाते ही यही खुलेगा)</label>
+    <input type="text" id="planPaymentLink" value="${escapeAttr(p ? (p.paymentLink||"") : "")}" placeholder="जैसे: https://wa.me/917566062677?text=...">
+
+    <!-- [बदलाव — Premium QR Code] अपने UPI App (Google Pay/PhonePe/Paytm) की "QR Code दिखाएं"
+         वाली Screen का Screenshot/Photo यहाँ Upload करें — यह टीचर को इसी Plan की Payment
+         Screen पर, इसी कीमत (ऊपर डाली गई ₹ वाली) के साथ सीधा दिखेगा। -->
+    <label>UPI QR Code (वैकल्पिक — Upload करते ही Teacher App में इसी Plan की कीमत के साथ दिखेगा)</label>
+    <div class="row" style="align-items:center;">
+      <img id="planQrPreview" src="${escapeAttr(p && p.qrImageDataUrl ? p.qrImageDataUrl : "")}" class="${p && p.qrImageDataUrl ? "" : "hidden"}" style="width:90px;height:90px;object-fit:contain;border:1px solid var(--border);border-radius:8px;background:#fff;">
+      <div style="flex:1;">
+        <input type="file" accept="image/*" id="planQrFile" onchange="handlePlanQrFileChange(event)">
+        ${p && p.qrImageDataUrl ? `<button type="button" class="btn btn-outline btn-sm" style="margin-top:6px;" onclick="removePlanQrImage()">QR हटाएं</button>` : ""}
+      </div>
+    </div>
+
+    <label>क्रम (Sort Order — छोटा नंबर पहले दिखेगा)</label>
+    <input type="number" id="planSortOrder" value="${p ? (p.sortOrder ?? 0) : 0}">
+    <div class="footer-actions">
+      <button class="btn btn-primary btn-sm" onclick="savePremiumPlan(${p ? `'${p.id}'` : "null"})">Save</button>
+    </div>
+  `;
+  openModal(html, true);
+  pendingPlanQrDataUrl = p && p.qrImageDataUrl ? p.qrImageDataUrl : undefined;
+};
+
+// undefined = कोई बदलाव नहीं (मौजूदा QR वैसे ही रहेगा), null = हटाना है, string = नया QR
+let pendingPlanQrDataUrl;
+window.handlePlanQrFileChange = async function(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith("image/")){
+    alert("कृपया केवल Image फ़ाइल चुनें");
+    event.target.value = "";
+    return;
+  }
+  try{
+    const dataUrl = await resizeImageToDataUrlPng(file, 500);
+    pendingPlanQrDataUrl = dataUrl;
+    const preview = document.getElementById("planQrPreview");
+    preview.src = dataUrl; preview.classList.remove("hidden");
+  }catch(err){
+    alert("QR Upload करने में समस्या आई: " + err.message);
+  }
+};
+window.removePlanQrImage = function(){
+  pendingPlanQrDataUrl = null;
+  const fileInput = document.getElementById("planQrFile");
+  if(fileInput) fileInput.value = "";
+  const preview = document.getElementById("planQrPreview");
+  if(preview){ preview.src = ""; preview.classList.add("hidden"); }
+};
+
+window.savePremiumPlan = async function(planId){
+  const name = document.getElementById("planName").value.trim();
+  const price = Number(document.getElementById("planPrice").value);
+  const durationDays = Number(document.getElementById("planDuration").value);
+  let paymentLink = document.getElementById("planPaymentLink").value.trim(); // [बदलाव 33]
+  const sortOrder = Number(document.getElementById("planSortOrder").value) || 0;
+
+  if(!name || !price || !durationDays){
+    alert("कृपया Plan का नाम, कीमत और अवधि — सभी भरें");
+    return;
+  }
+  // [बदलाव 36 - बग फिक्स] अगर http://, https://, wa.me, tel:, mailto: वगैरह से शुरू नहीं होता,
+  // तो अपने-आप https:// जोड़ दिया जाता है। वरना Browser इसे अपनी ही Site के अंदर का Relative
+  // Link मान लेता है (जैसे wa.me/91xxxx को github.io/wa.me/91xxxx समझकर 404 दिखाता है)।
+  if(paymentLink && !/^([a-zA-Z][a-zA-Z0-9+.-]*:|\/\/)/.test(paymentLink)){
+    paymentLink = "https://" + paymentLink;
+  }
+
+  const data = { name, price, durationDays, paymentLink: paymentLink || null, sortOrder, active: true };
+  if(pendingPlanQrDataUrl !== undefined){
+    data.qrImageDataUrl = pendingPlanQrDataUrl; // string नया QR, या null (हटाया गया)
+  }
+  try{
+    if(planId){
+      await fs.updateDoc(fs.doc(db, "premiumPlans", planId), data);
+    } else {
+      await fs.addDoc(fs.collection(db, "premiumPlans"), data);
+    }
+    pendingPlanQrDataUrl = undefined;
+    closeModal();
+    await loadPremiumPlans();
+    renderPlansTab(document.getElementById("listWrap"));
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+window.togglePlanActive = async function(planId){
+  const p = premiumPlansList.find(x => x.id === planId);
+  if(!p) return;
+  try{
+    await fs.updateDoc(fs.doc(db, "premiumPlans", planId), { active: p.active === false });
+    await loadPremiumPlans();
+    renderPlansTab(document.getElementById("listWrap"));
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+window.deletePremiumPlan = async function(planId){
+  if(!confirm("क्या आप यह Plan Delete करना चाहते हैं? जिन Teachers ने पहले से यह Plan लिया है, उन पर कोई असर नहीं पड़ेगा — सिर्फ यह Plan नए सिरे से नहीं दिखेगा।")) return;
+  try{
+    await fs.deleteDoc(fs.doc(db, "premiumPlans", planId));
+    await loadPremiumPlans();
+    renderPlansTab(document.getElementById("listWrap"));
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+
+/* =====================================================================
+   [बदलाव 30] PAYMENT REQUESTS — Teacher App से razorpay.me Payment के बाद
+   टीचर द्वारा भेजे गए "मैंने Payment कर दिया है" Confirmation यहाँ दिखते हैं,
+   Payment ID सहित। Admin यहीं से Accept (Plan अपने-आप Activate)
+   या Reject कर सकते हैं।
+   ===================================================================== */
+let paymentRequestsList = [];
+
+async function loadPaymentRequests(){
+  try{
+    const snap = await fs.getDocs(fs.query(fs.collection(db, "paymentRequests"), fs.orderBy("createdAt", "desc")));
+    paymentRequestsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }catch(err){
+    console.error("loadPaymentRequests error:", err);
+    paymentRequestsList = [];
+  }
+}
+
+function renderPaymentRequestsTab(wrap){
+  const pending = paymentRequestsList.filter(r => (r.status || "pending") === "pending");
+  const others = paymentRequestsList.filter(r => (r.status || "pending") !== "pending");
+
+  const rowHtml = (r) => `
+    <tr>
+      <td>${r.payerType === "headmaster" ? '<span class="badge badge-pending">🏫 Headmaster</span>' : '<span class="badge badge-private">👩‍🏫 Teacher</span>'}</td>
+      <td>${escapeHtml(r.teacherName||"-")}</td>
+      <td>${escapeHtml(r.teacherRegNo||"-")}</td>
+      <td>${escapeHtml(r.teacherMobile||"-")}</td>
+      <td>${escapeHtml(r.planName||"-")}</td>
+      <td>₹${r.price||0}</td>
+      <td>${r.paymentMethod === "qr_manual" ? '<span class="badge badge-pending">📱 QR/UPI</span>' : '<span class="badge badge-private">🔒 Cashfree</span>'}</td>
+      <td><b>${escapeHtml(r.referenceNote || "— नहीं दिया —")}</b></td>
+      <td>${formatDate(r.createdAt)}</td>
+      <td>
+        <span class="badge ${r.status==='approved'?'badge-pass':r.status==='rejected'?'badge-fail':'badge-private'}">${escapeHtml(r.status||"pending")}</span>
+        ${(r.status||"pending")==="pending" ? `
+          <div style="margin-top:6px;display:flex;gap:6px;">
+            <button class="btn btn-primary btn-sm" onclick="approvePaymentRequest('${r.id}')">✅ Accept</button>
+            <button class="btn btn-danger btn-sm" onclick="rejectPaymentRequest('${r.id}')">✕ Reject</button>
+          </div>` : ""}
+      </td>
+    </tr>`;
+
+  wrap.innerHTML = `
+    <h3 style="margin-top:0;color:var(--primary-dark);">🧾 Payment Requests</h3>
+    <p style="font-size:13px;color:#666;margin-top:-6px;">Teacher App और Headmaster App — दोनों से भेजे गए Payment Confirmations यहाँ आते हैं। QR/UPI वाली Request में UTR Number, Cashfree वाली में Payment ID होगा। ⚠️ "Accept" सिर्फ Request को Record के लिए Mark करता है — असली Plan तो उसी व्यक्ति के Teachers/Headmasters Tab में जाकर "Plan बदलें" से ही Activate होता है, इसलिए Accept करने से पहले UTR/Payment ID अपने Bank Statement या UPI App में मिलाकर ज़रूर देख लें।</p>
+    <h3 style="font-size:14px;">⏳ Pending (${pending.length})</h3>
+    <table class="list-table">
+      <tr><th>किससे</th><th>नाम</th><th>Reg No</th><th>Mobile</th><th>Plan</th><th>Price</th><th>तरीका</th><th>UTR / Payment ID</th><th>भेजा गया</th><th>Status / Action</th></tr>
+      ${pending.length ? pending.map(rowHtml).join("") : `<tr><td colspan="10" style="text-align:center;color:#888;">अभी कोई नया Payment Request नहीं है।</td></tr>`}
+    </table>
+    <h3 style="font-size:14px;margin-top:20px;">पुराने Requests (${others.length})</h3>
+    <table class="list-table">
+      <tr><th>किससे</th><th>नाम</th><th>Reg No</th><th>Mobile</th><th>Plan</th><th>Price</th><th>तरीका</th><th>UTR / Payment ID</th><th>भेजा गया</th><th>Status</th></tr>
+      ${others.length ? others.map(rowHtml).join("") : `<tr><td colspan="10" style="text-align:center;color:#888;">—</td></tr>`}
+    </table>
+  `;
+}
+
+// [बदलाव 33] नया Flow: Teacher App अब Payment Confirm करते ही खुद Plan Activate कर देता है
+// (Optimistic Activation) — इसलिए "Accept" पर अब कुछ बदलने की ज़रूरत नहीं, सिर्फ Status
+// Mark करना है। असली काम "Reject" में है — वह टीचर का Plan तुरंत वापस Free कर देता है।
+window.approvePaymentRequest = async function(reqId){
+  const r = paymentRequestsList.find(x => x.id === reqId);
+  if(!r) return;
+  if(!confirm(`${r.teacherName} का Payment Accept करें? (यह सिर्फ Request को Record के लिए Mark करेगा — Plan Activate करने के लिए अलग से "Plan बदलें" इस्तेमाल करें)`)) return;
+  try{
+    await fs.updateDoc(fs.doc(db, "paymentRequests", reqId), { status: "approved" });
+    await loadPaymentRequests();
+    renderPaymentRequestsTab(document.getElementById("listWrap"));
+    alert(`Payment Accept हो गया ✅ — अब ${r.payerType === "headmaster" ? "Headmasters" : "Teachers"} Tab में जाकर "${r.teacherName}" का Plan Activate करना न भूलें।`);
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+window.rejectPaymentRequest = async function(reqId){
+  const r = paymentRequestsList.find(x => x.id === reqId);
+  if(!r) return;
+  if(!confirm(`${r.teacherName} की Payment Request को Reject करें?`)) return;
+  try{
+    // [बदलाव 40] अब Plan तभी Active होता है जब Admin Accept करे, इसलिए Reject करने पर
+    // टीचर के मौजूदा Plan को छेड़ने की ज़रूरत नहीं (पहले यहाँ ज़बरदस्ती Free किया जाता था —
+    // लेकिन इससे अगर टीचर को किसी और तरीके से जैसे Referral से पहले से Premium मिला हो,
+    // तो वह गलती से हट जाता था)। Reject का मतलब सिर्फ इतना है कि यह Request Approve नहीं हुई।
+    await fs.updateDoc(fs.doc(db, "paymentRequests", reqId), { status: "rejected" });
+    await loadPaymentRequests();
+    renderPaymentRequestsTab(document.getElementById("listWrap"));
+    alert("Payment Request Reject कर दी गई है।");
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+/* =====================================================================
+   🎁 REFERRALS TAB — Teacher App के "Refer to Earn" System से बना हर
+   Referral Record यहाँ दिखता है (किसने किसे Refer किया, कब जुड़ा, अभी
+   Status क्या है)। यह सिर्फ देखने के लिए है, यहाँ से कुछ Edit नहीं होता।
+   ===================================================================== */
+let referralsList = [];
+async function loadReferrals(){
+  try{
+    const snap = await fs.getDocs(fs.query(fs.collection(db, "referrals"), fs.orderBy("createdAt", "desc")));
+    referralsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }catch(err){
+    console.error("loadReferrals error:", err);
+    referralsList = [];
+  }
+}
+function referralStatusBadgeAdmin(status){
+  if(status === "giftcard_sent") return '<span class="badge badge-pass">🎉 Gift Card भेजा गया</span>';
+  if(status === "activity_started") return '<span class="badge badge-pending">🎁 काम शुरू — Gift Card Pending</span>';
+  return '<span class="badge badge-private">🟡 सिर्फ जुड़े</span>';
+}
+function renderReferralsTab(wrap){
+  wrap.innerHTML = `
+    <h3 style="margin-top:0;color:var(--primary-dark);">🎁 Referrals (कुल ${referralsList.length})</h3>
+    <p style="font-size:13px;color:#666;margin-top:-6px;">यह Teacher App के "Refer to Earn" System का Record है — किसने किसे Refer किया, और अभी उस Referral का Status क्या है। "काम शुरू — Gift Card Pending" दिखते ही असली Gift Card Request <b>Short Buy के Admin App</b> में "API Request गिफ्ट कार्ड" के पास पहुंच चुकी होती है — Approve वहीं से करें।</p>
+    <p style="font-size:12px;color:#8892a0;margin-top:-6px;">यहाँ "जुड़े" (सिर्फ Sign Up हुआ) और "Gift Card Pending" (काम शुरू करते ही Request अपने-आप चली गई) — इन दोनों स्थितियों के बीच का फ़र्क़ साफ़ दिखेगा।</p>
+    <table class="list-table">
+      <tr><th>Referrer (जिसने बुलाया)</th><th>Referred (जो आया)</th><th>Status</th><th>तारीख</th></tr>
+      ${referralsList.length ? referralsList.map(r => `
+        <tr>
+          <td>${escapeHtml(r.referrerName||"-")} <span style="color:#888;font-size:11px;">(${escapeHtml(r.referrerRegNo||"-")}, ${escapeHtml(r.referrerMobile||"-")})</span></td>
+          <td>${escapeHtml(r.referredName||"-")} <span style="color:#888;font-size:11px;">(${escapeHtml(r.referredRegNo||"-")})</span></td>
+          <td>${referralStatusBadgeAdmin(r.status)}</td>
+          <td>${formatDate(r.createdAt)}</td>
+        </tr>
+      `).join("") : `<tr><td colspan="4" style="text-align:center;color:#888;">अभी तक कोई Referral नहीं हुआ।</td></tr>`}
+    </table>
+  `;
+}
+
+/* =====================================================================
+   💳 GIFT CARD REQUESTS — यह Tab अब यहाँ नहीं है
+   ---------------------------------------------------------------------
+   शुरू में यहाँ एक अलग "Gift Card Requests" Tab बनाया गया था, पर पता चला
+   कि असली Gift Card System पहले से Short Buy के Admin App में मौजूद है
+   (वही जगह जहाँ से यह API Key बनी थी)। अब Teacher App सीधे उसी साझा System
+   को Request भेजता है (देखें Teacher App का markFirstActivityIfNeeded),
+   इसलिए Approve/Reject करने का असली काम अब **Short Buy के Admin App** में
+   "API Request गिफ्ट कार्ड" सेक्शन से होगा, यहाँ से नहीं — यहाँ दोबारा वही
+   चीज़ बनाना सिर्फ़ भ्रम बढ़ाता, इसलिए हटा दिया गया। नीचे "Referrals" Tab
+   अब भी बताता रहेगा कि किसका Request कब भेजा गया।
+   ===================================================================== */
+
+
+
+/* =====================================================================
+   [बदलाव 34] PASSWORD REQUESTS
+   ⚠️ ज़रूरी सुरक्षा बात: टीचर का असली Password यहाँ कभी नहीं दिखेगा — Firebase
+   Authentication किसी का भी Password Plain-Text में कहीं Store ही नहीं करता,
+   इसलिए उसे "दिखाना" तकनीकी रूप से मुमकिन ही नहीं है (यह हर सुरक्षित Login
+   System का बुनियादी नियम है)। इसकी जगह "Accept" दबाते ही Firebase एक असली,
+   सुरक्षित Password Reset Link सीधे टीचर के Email पर भेज देता है (जिससे वह
+   खुद नया Password बना सके), और आप WhatsApp/SMS से सिर्फ इतना बता सकते हैं
+   कि "आपके Email पर Reset Link भेजा गया है" — यह पूरी तरह सुरक्षित तरीका है।
+   ===================================================================== */
+let passwordRequestsList = [];
+
+async function loadPasswordRequests(){
+  try{
+    // [बदलाव — Headmaster App] अब Teacher App ("passwordRequests") और Headmaster App
+    // ("headmasterPasswordRequests") दोनों की Requests एक ही Tab में साथ दिखती हैं —
+    // हर Request पर _coll (असली Collection नाम) और _role (सिर्फ दिखाने के लिए) टैग कर
+    // दिया जाता है, ताकि Accept/Reject सही Collection में लिखे।
+    const [tSnap, hSnap] = await Promise.all([
+      fs.getDocs(fs.query(fs.collection(db, "passwordRequests"), fs.orderBy("createdAt", "desc"))),
+      fs.getDocs(fs.query(fs.collection(db, "headmasterPasswordRequests"), fs.orderBy("createdAt", "desc")))
+    ]);
+    const teacherReqs = tSnap.docs.map(d => ({ id: d.id, ...d.data(), _coll: "passwordRequests", _role: "Teacher" }));
+    const hmReqs = hSnap.docs.map(d => ({ id: d.id, ...d.data(), _coll: "headmasterPasswordRequests", _role: "Headmaster" }));
+    passwordRequestsList = teacherReqs.concat(hmReqs).sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
+  }catch(err){
+    console.error("loadPasswordRequests error:", err);
+    passwordRequestsList = [];
+  }
+}
+
+function renderPasswordRequestsTab(wrap){
+  const pending = passwordRequestsList.filter(r => (r.status||"pending") === "pending");
+  const others = passwordRequestsList.filter(r => (r.status||"pending") !== "pending");
+  const rowHtml = (r) => `
+    <tr>
+      <td><span class="badge ${r._role === 'Headmaster' ? 'badge-pending' : 'badge-private'}">${r._role}</span></td>
+      <td>${escapeHtml(r.email||"-")}</td>
+      <td>${escapeHtml(r.number||r.mobile||"-")}</td>
+      <td>${formatDate(r.createdAt)}</td>
+      <td>
+        <span class="badge ${r.status==='approved'?'badge-pass':r.status==='rejected'?'badge-fail':'badge-private'}">${escapeHtml(r.status||"pending")}</span>
+        ${(r.status||"pending")==="pending" ? `
+          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">
+            <button class="btn btn-primary btn-sm" onclick="acceptPasswordRequest('${r.id}')">✅ Accept (Reset Email भेजें)</button>
+            <button class="btn btn-danger btn-sm" onclick="rejectPasswordRequest('${r.id}')">✕ Reject</button>
+          </div>` : ""}
+      </td>
+    </tr>`;
+  wrap.innerHTML = `
+    <h3 style="margin-top:0;color:var(--primary-dark);">🔑 Password Requests</h3>
+    <p style="font-size:13px;color:#666;margin-top:-6px;">Teacher App और Headmaster App दोनों से आई "Forgot Password" Requests यहाँ आती हैं। Accept करते ही उस Email पर एक असली Reset Link भेजा जाता है, और आप उन्हें WhatsApp/SMS से सूचना दे सकते हैं।</p>
+    <h3 style="font-size:14px;">⏳ Pending (${pending.length})</h3>
+    <table class="list-table">
+      <tr><th>किस App से</th><th>Email</th><th>Mobile</th><th>भेजा गया</th><th>Status / Action</th></tr>
+      ${pending.length ? pending.map(rowHtml).join("") : `<tr><td colspan="5" style="text-align:center;color:#888;">अभी कोई नई Request नहीं है।</td></tr>`}
+    </table>
+    <h3 style="font-size:14px;margin-top:20px;">पुरानी Requests (${others.length})</h3>
+    <table class="list-table">
+      <tr><th>किस App से</th><th>Email</th><th>Mobile</th><th>भेजा गया</th><th>Status</th></tr>
+      ${others.length ? others.map(rowHtml).join("") : `<tr><td colspan="5" style="text-align:center;color:#888;">—</td></tr>`}
+    </table>
+  `;
+}
+
+window.acceptPasswordRequest = async function(reqId){
+  const r = passwordRequestsList.find(x => x.id === reqId);
+  if(!r) return;
+  try{
+    await sendPasswordResetEmail(auth, r.email);
+    await fs.updateDoc(fs.doc(db, r._coll, reqId), { status: "approved" });
+    await loadPasswordRequests();
+    renderPasswordRequestsTab(document.getElementById("listWrap"));
+
+    const appName = r._role === "Headmaster" ? "PSB Headmaster" : "PSB Teacher PRO";
+    const msg = `नमस्ते! आपकी Password Reset Request Accept हो गई है। कृपया अपना Email Inbox (${r.email}) चेक करें — वहाँ एक Password Reset Link भेजा गया है, उससे आप अपना नया Password बना सकते हैं। - ${appName}`;
+    openModal(`
+      <h3>Reset Email भेज दिया गया है ✅</h3>
+      <p style="font-size:14px;color:#444;">अब ${r._role === "Headmaster" ? "Headmaster" : "टीचर"} को WhatsApp या SMS से सूचना दें:</p>
+      <div class="footer-actions" style="justify-content:flex-start;">
+        <a class="btn btn-primary btn-sm" target="_blank" rel="noopener" href="https://wa.me/91${r.number||r.mobile}?text=${encodeURIComponent(msg)}">📲 WhatsApp से भेजें</a>
+        <a class="btn btn-outline btn-sm" href="sms:${r.number||r.mobile}?body=${encodeURIComponent(msg)}">💬 SMS से भेजें</a>
+      </div>
+    `, true);
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+window.rejectPasswordRequest = async function(reqId){
+  if(!confirm("इस Password Request को Reject करें?")) return;
+  const r = passwordRequestsList.find(x => x.id === reqId);
+  if(!r) return;
+  try{
+    await fs.updateDoc(fs.doc(db, r._coll, reqId), { status: "rejected" });
+    await loadPasswordRequests();
+    renderPasswordRequestsTab(document.getElementById("listWrap"));
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+
+/* =====================================================================
+   [बदलाव 35, अपडेट बदलाव 50] महत्वपूर्ण सूचना (ANNOUNCEMENTS) — Admin-side CRUD
+   Teacher App ("announcements") और Student App ("studentAnnouncements") के
+   लिए दो पूरी तरह अलग Collections/Sections — जैसा माँगा गया था कि दोनों के
+   लिए Admin App में अलग-अलग Add/Edit Option हो।
+   ===================================================================== */
+let announcementsAdminList = [];
+let studentAnnouncementsAdminList = [];
+
+async function loadAnnouncementsAdmin(){
+  try{
+    const [tSnap, sSnap] = await Promise.all([
+      fs.getDocs(fs.query(fs.collection(db, "announcements"), fs.orderBy("createdAt", "desc"))),
+      fs.getDocs(fs.query(fs.collection(db, "studentAnnouncements"), fs.orderBy("createdAt", "desc")))
+    ]);
+    announcementsAdminList = tSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    studentAnnouncementsAdminList = sSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }catch(err){
+    console.error("loadAnnouncementsAdmin error:", err);
+    announcementsAdminList = [];
+    studentAnnouncementsAdminList = [];
+  }
+}
+
+function announcementRowHtml(a, coll){
+  return `
+    <tr>
+      <td>${escapeHtml(a.title||"-")} ${a.active === false ? '<span class="badge badge-private">Inactive</span>' : '<span class="badge badge-pass">Active</span>'}</td>
+      <td>${a.link ? `<a href="${escapeAttr(a.link)}" target="_blank" rel="noopener">${escapeHtml(a.linkButtonText||"लिंक खोलें")}</a>` : "-"}</td>
+      ${coll === "announcements" ? `<td>${a.targetTeacherRegNos && a.targetTeacherRegNos.length ? "सिर्फ: " + a.targetTeacherRegNos.map(r => escapeHtml(r)).join(", ") : "सभी Teachers"}</td>` : ""}
+      <td>${formatDate(a.createdAt)}</td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="toggleAnnouncementActive('${coll}','${a.id}',${a.active===false})">${a.active===false ? "Activate" : "Deactivate"}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAnnouncement('${coll}','${a.id}')">Delete</button>
+      </td>
+    </tr>
+  `;
+}
+
+function renderAnnouncementsTab(wrap){
+  wrap.innerHTML = `
+    <h3 style="margin-top:0;color:var(--primary-dark);">📢 Teacher App की सूचनाएं</h3>
+    <div class="footer-actions" style="justify-content:flex-start;">
+      <button class="btn btn-primary btn-sm" onclick="openAnnouncementEditor('announcements')">+ नई सूचना भेजें</button>
+    </div>
+    <table class="list-table" style="margin-top:14px;">
+      <tr><th>Title</th><th>Link</th><th>किसके लिए</th><th>भेजी गई</th><th>Action</th></tr>
+      ${announcementsAdminList.length ? announcementsAdminList.map(a => announcementRowHtml(a, "announcements")).join("") : `<tr><td colspan="5" style="text-align:center;color:#888;">अभी कोई सूचना नहीं भेजी गई।</td></tr>`}
+    </table>
+
+    <h3 style="color:var(--primary-dark);margin-top:26px;">📢 Student App की सूचनाएं</h3>
+    <div class="footer-actions" style="justify-content:flex-start;">
+      <button class="btn btn-primary btn-sm" onclick="openAnnouncementEditor('studentAnnouncements')">+ नई सूचना भेजें</button>
+    </div>
+    <table class="list-table" style="margin-top:14px;">
+      <tr><th>Title</th><th>Link</th><th>भेजी गई</th><th>Action</th></tr>
+      ${studentAnnouncementsAdminList.length ? studentAnnouncementsAdminList.map(a => announcementRowHtml(a, "studentAnnouncements")).join("") : `<tr><td colspan="4" style="text-align:center;color:#888;">अभी कोई सूचना नहीं भेजी गई।</td></tr>`}
+    </table>
+  `;
+}
+
+window.openAnnouncementEditor = async function(coll){
+  if(coll === "announcements") await loadTeacherPickerList();
+  openModal(`
+    <h3>📢 ${coll === "announcements" ? "Teacher App" : "Student App"} — नई सूचना भेजें</h3>
+    <label>Title</label>
+    <input type="text" id="anTitle" placeholder="जैसे: ज़रूरी सूचना">
+    <label>संदेश</label>
+    <textarea id="anMessage" placeholder="अपना संदेश लिखें"></textarea>
+    <label>Link (वैकल्पिक)</label>
+    <input type="text" id="anLink" placeholder="https://... (न डालें तो भी भेज सकते हैं)">
+    <label>Link Button का Text (वैकल्पिक — न भरें तो "लिंक खोलें" डिफ़ॉल्ट)</label>
+    <input type="text" id="anLinkBtnText" placeholder="जैसे: फॉर्म भरें">
+    ${coll === "announcements" ? `
+      <label>किन्हें भेजनी है? (कोई न चुनें तो सभी Teachers को जाएगी — एक से ज़्यादा भी चुन सकते हैं)</label>
+      ${renderTeacherPickerHtml("anTarget")}
+    ` : ""}
+    <div class="footer-actions">
+      <button class="btn btn-primary btn-sm" onclick="sendAnnouncement('${coll}')">भेजें</button>
+    </div>
+  `, true);
+};
+
+window.sendAnnouncement = async function(coll){
+  const title = document.getElementById("anTitle").value.trim();
+  const message = document.getElementById("anMessage").value.trim();
+  const link = document.getElementById("anLink").value.trim();
+  const linkButtonText = document.getElementById("anLinkBtnText").value.trim();
+
+  if(!title){
+    alert("कृपया Title डालें");
+    return;
+  }
+  const data = {
+    title, message: message || "", link: link || null, linkButtonText: linkButtonText || null,
+    active: true, createdAt: new Date().toISOString()
+  };
+  if(coll === "announcements"){
+    const targetTeacherRegNos = getSelectedTeacherRegNos("anTarget");
+    data.targetTeacherRegNos = targetTeacherRegNos.length ? targetTeacherRegNos : null;
+  }
+  try{
+    await fs.addDoc(fs.collection(db, coll), data);
+    closeModal();
+    await loadAnnouncementsAdmin();
+    renderAnnouncementsTab(document.getElementById("listWrap"));
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+window.toggleAnnouncementActive = async function(coll, id, makeActive){
+  await fs.updateDoc(fs.doc(db, coll, id), { active: makeActive });
+  await loadAnnouncementsAdmin();
+  renderAnnouncementsTab(document.getElementById("listWrap"));
+};
+
+window.deleteAnnouncement = async function(coll, id){
+  if(!confirm("क्या इस सूचना को Delete करना है?")) return;
+  try{
+    await fs.deleteDoc(fs.doc(db, coll, id));
+    await loadAnnouncementsAdmin();
+    renderAnnouncementsTab(document.getElementById("listWrap"));
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+/* =====================================================================
+   [बदलाव 55] DOUBT FORUM — REPORT MODERATION
+   Student App में नया Doubt Forum जोड़ा गया है जहां Students आपस में सवाल-जवाब
+   कर सकते हैं। यह Public Content है, इसलिए साथ में यह Moderation Tool ज़रूरी है —
+   Reports देखें, गलत Content Delete करें, बार-बार गलती करने वाले Student को सीधे
+   यहीं से Ban करें (मौजूदा Ban System दोबारा इस्तेमाल होता है)।
+   ===================================================================== */
+let doubtReportsList = [];
+async function loadDoubtReports(){
+  try{
+    const snap = await fs.getDocs(fs.query(fs.collection(db,"doubtReports"), fs.where("status","==","pending"), fs.orderBy("createdAt","desc")));
+    const reports = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    doubtReportsList = await Promise.all(reports.map(async (r) => {
+      try{
+        const collName = r.targetType === "doubt" ? "doubts" : "doubtAnswers";
+        const contentSnap = await fs.getDoc(fs.doc(db, collName, r.targetId));
+        return { ...r, content: contentSnap.exists() ? contentSnap.data() : null };
+      }catch(e){ return { ...r, content: null }; }
+    }));
+  }catch(err){
+    console.error("loadDoubtReports error:", err);
+    doubtReportsList = [];
+  }
+}
+
+function renderDoubtReportsTab(wrap){
+  wrap.innerHTML = `
+    <h3 style="margin-top:0;color:var(--primary-dark);">🚩 Doubt Forum की Reports (${doubtReportsList.length} Pending)</h3>
+    <p style="font-size:12.5px;color:#888;">Students द्वारा Report किए गए सवाल/जवाब यहां दिखते हैं।</p>
+    ${doubtReportsList.length === 0 ? "<p style='color:#999;'>अभी कोई Pending Report नहीं है 👍</p>" : doubtReportsList.map(r => `
+      <div class="notice-item">
+        <h4>${r.targetType === "doubt" ? "❓ सवाल" : "💬 जवाब"} — Report किया गया: ${formatDate(r.createdAt)}</h4>
+        ${r.content ? `
+          <p style="font-size:13px;">${escapeHtml(r.content.question || r.content.answer || "")}</p>
+          <p class="meta">पोस्ट किया: ${escapeHtml(r.content.pseudonym||"-")}</p>
+        ` : `<p style="font-size:13px;color:#999;">यह Content पहले ही Delete हो चुका है।</p>`}
+        <div class="footer-actions" style="justify-content:flex-start;">
+          ${r.content ? `
+            <button class="btn btn-danger btn-sm" onclick="deleteReportedContent('${r.id}','${r.targetType}','${r.targetId}')">🗑️ Content Delete करें</button>
+            <button class="btn btn-danger btn-sm" onclick="banReportedStudent('${r.content.studentUid}','${jsAttr(r.content.pseudonym||'Student')}')">⛔ इस Student को Ban करें</button>
+          ` : ""}
+          <button class="btn btn-outline btn-sm" onclick="dismissDoubtReport('${r.id}')">✔️ ठीक है, Dismiss करें</button>
+        </div>
+      </div>
+    `).join("")}
+  `;
+}
+
+window.deleteReportedContent = async function(reportId, targetType, targetId){
+  if(!confirm("क्या आप यह Content हमेशा के लिए Delete करना चाहते हैं?")) return;
+  const collName = targetType === "doubt" ? "doubts" : "doubtAnswers";
+  await fs.deleteDoc(fs.doc(db, collName, targetId));
+  await fs.updateDoc(fs.doc(db,"doubtReports",reportId), { status:"resolved" });
+  await loadDoubtReports();
+  renderDoubtReportsTab(document.getElementById("listWrap"));
+};
+
+window.dismissDoubtReport = async function(reportId){
+  await fs.updateDoc(fs.doc(db,"doubtReports",reportId), { status:"dismissed" });
+  await loadDoubtReports();
+  renderDoubtReportsTab(document.getElementById("listWrap"));
+};
+
+window.banReportedStudent = function(uid, name){
+  if(!uid){ alert("यह Student नहीं मिला (शायद Account Delete हो चुका है)"); return; }
+  openBanModal("studentAppUsers", uid, name);
+};
+
+
+window.switchTab = function(tab){
+  currentTab = tab;
+  document.getElementById("tabTeachers").classList.toggle("active", tab==="teachers");
+  document.getElementById("tabHeadmasters").classList.toggle("active", tab==="headmasters");
+  document.getElementById("tabStudentApp").classList.toggle("active", tab==="studentAppUsers");
+  document.getElementById("tabPapers").classList.toggle("active", tab==="papers");
+  document.getElementById("tabNotes").classList.toggle("active", tab==="notes");
+  document.getElementById("tabMarksheets").classList.toggle("active", tab==="marksheets");
+  document.getElementById("tabTestResults").classList.toggle("active", tab==="testResults");
+  document.getElementById("tabCards").classList.toggle("active", tab==="idCards");
+  document.getElementById("tabBanned").classList.toggle("active", tab==="banned");
+  document.getElementById("tabPlans").classList.toggle("active", tab==="plans");
+  document.getElementById("tabPayments").classList.toggle("active", tab==="payments");
+  document.getElementById("tabReferrals").classList.toggle("active", tab==="referrals");
+  document.getElementById("tabPasswordReq").classList.toggle("active", tab==="passwordReq");
+  document.getElementById("tabAnnouncements").classList.toggle("active", tab==="announcements");
+  document.getElementById("tabDoubtReports").classList.toggle("active", tab==="doubtReports");
+  document.getElementById("tabSettings").classList.toggle("active", tab==="settings");
+  document.getElementById("searchBox").value = "";
+
+  const isSettings = tab === "settings";
+  const isPlans = tab === "plans";
+  const isPayments = tab === "payments";
+  const isReferrals = tab === "referrals";
+  const isPasswordReq = tab === "passwordReq";
+  const isAnnouncements = tab === "announcements";
+  const isDoubtReports = tab === "doubtReports";
+  const isBanned = tab === "banned";
+  const hideListControls = isSettings || isPlans || isPayments || isReferrals || isPasswordReq || isAnnouncements || isBanned || isDoubtReports;
+  document.getElementById("pageHintText").classList.toggle("hidden", hideListControls);
+  document.getElementById("searchBox").classList.toggle("hidden", hideListControls);
+  document.getElementById("deleteAllBtn").classList.toggle("hidden", hideListControls);
+  document.getElementById("loadMoreWrap").classList.toggle("hidden", hideListControls);
+
+  if(isSettings){
+    document.getElementById("listWrap").innerHTML = '<p style="color:#8892a0;">Load हो रहा है...</p>';
+    loadAppSettings().finally(() => renderSettingsTab(document.getElementById("listWrap")));
+  } else if(isPlans){
+    document.getElementById("listWrap").innerHTML = '<p style="color:#8892a0;">Load हो रहा है...</p>';
+    loadPremiumPlans().finally(() => renderPlansTab(document.getElementById("listWrap")));
+  } else if(isPayments){
+    document.getElementById("listWrap").innerHTML = '<p style="color:#8892a0;">Load हो रहा है...</p>';
+    loadPaymentRequests().finally(() => renderPaymentRequestsTab(document.getElementById("listWrap")));
+  } else if(isReferrals){
+    document.getElementById("listWrap").innerHTML = '<p style="color:#8892a0;">Load हो रहा है...</p>';
+    loadReferrals().finally(() => renderReferralsTab(document.getElementById("listWrap")));
+  } else if(isPasswordReq){
+    document.getElementById("listWrap").innerHTML = '<p style="color:#8892a0;">Load हो रहा है...</p>';
+    loadPasswordRequests().finally(() => renderPasswordRequestsTab(document.getElementById("listWrap")));
+  } else if(isAnnouncements){
+    document.getElementById("listWrap").innerHTML = '<p style="color:#8892a0;">Load हो रहा है...</p>';
+    loadAnnouncementsAdmin().finally(() => renderAnnouncementsTab(document.getElementById("listWrap")));
+  } else if(isDoubtReports){
+    document.getElementById("listWrap").innerHTML = '<p style="color:#8892a0;">Load हो रहा है...</p>';
+    loadDoubtReports().finally(() => renderDoubtReportsTab(document.getElementById("listWrap")));
+  } else if(isBanned){
+    document.getElementById("listWrap").innerHTML = '<p style="color:#8892a0;">Load हो रहा है...</p>';
+    loadBannedUsers().finally(() => renderBannedTab(document.getElementById("listWrap")));
+  } else {
+    document.getElementById("listWrap").innerHTML = '<p style="color:#8892a0;">Load हो रहा है...</p>';
+    loadTabPage(tab, true);
+  }
+};
+
+window.renderCurrentTab = function(){
+  if(["settings","plans","payments","referrals","passwordReq","announcements","banned"].includes(currentTab)) return;
+  const search = (document.getElementById("searchBox").value || "").toLowerCase();
+  const wrap = document.getElementById("listWrap");
+
+  if(currentTab === "teachers"){
+    const filtered = allTeachers.filter(t => (t.name||"").toLowerCase().includes(search) || (t.number||"").includes(search) || (t.email||"").toLowerCase().includes(search) || (t.registrationNumber||"").toLowerCase().includes(search));
+    if(filtered.length === 0){ wrap.innerHTML = "<p>कोई Teacher नहीं मिला (अभी तक Load हुए records में)।</p>"; return; }
+    wrap.innerHTML = `<table class="list-table"><tr><th>Name</th><th>Reg No</th><th>Number</th><th>Email</th><th>Type</th><th>Institute</th><th>Plan</th><th>Status</th><th>Total Print</th><th>Action</th></tr>` +
+      filtered.map(t => {
+        const paid = isTeacherPremium(t);
+        return `<tr>
+        <td>${escapeHtml(t.name)}</td>
+        <td>${escapeHtml(t.registrationNumber||t.id)}</td>
+        <td>${escapeHtml(t.number)}</td>
+        <td>${escapeHtml(t.email||"-")}</td>
+        <td>${escapeHtml(t.teacherType||"-")}</td>
+        <td>${escapeHtml(t.instituteName||"-")}</td>
+        <td>
+          <span class="badge ${paid ? 'badge-pass' : 'badge-private'}">${paid ? '⭐ Paid' : '🆓 Free'}</span><br>
+          <span style="font-size:11px;color:#888;">${escapeHtml(t.planName || (paid ? "Premium" : "-"))}</span>
+        </td>
+        <td>${presenceBadgeHtml(t)}</td>
+        <td style="text-align:center;">${teacherPrintTotal(t)}<br>
+          <span style="font-size:10px;color:#888;">P:${t.papersCount||0} N:${t.notesCount||0} M:${t.marksheetsCount||0} T:${t.testResultsCount||0} C:${t.cardsCount||0}</span>
+        </td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="viewTeacherDetails('${t.id}')">View</button>
+          <button class="btn btn-accent btn-sm" onclick="openChangePlanModal('teachers','${t.id}')">Plan बदलें</button>
+          <button class="btn btn-outline btn-sm" onclick="resetTeacherPassword('${t.id}')">Send Reset Email</button>
+          ${isCurrentlyBanned(t)
+            ? `<button class="btn btn-success btn-sm" onclick="quickUnban('teachers','${t.id}')">Unban</button>`
+            : `<button class="btn btn-danger btn-sm" onclick="openBanModal('teachers','${t.id}','${jsAttr(t.name)}')">Ban</button>`}
+          <button class="btn btn-danger btn-sm" onclick="deleteTeacher('${t.id}')">Delete</button>
+        </td>
+      </tr>`;
+      }).join("") + `</table>`;
+
+  } else if(currentTab === "headmasters"){
+    const filtered = allHeadmasters.filter(h => (h.name||"").toLowerCase().includes(search) || (h.number||"").includes(search) || (h.email||"").toLowerCase().includes(search) || (h.schoolName||"").toLowerCase().includes(search) || (h.diseCode||"").includes(search));
+    if(filtered.length === 0){ wrap.innerHTML = "<p>कोई Headmaster नहीं मिला (अभी तक Load हुए records में)।</p>"; return; }
+    wrap.innerHTML = `<table class="list-table"><tr><th>Name</th><th>Reg No</th><th>Mobile</th><th>Email</th><th>School</th><th>DISE Code</th><th>Plan</th><th>Status</th><th>Action</th></tr>` +
+      filtered.map(h => `<tr>
+        <td>${escapeHtml(h.name)}</td>
+        <td>${escapeHtml(h.id)}</td>
+        <td>${escapeHtml(h.number)}</td>
+        <td>${escapeHtml(h.email||"-")}</td>
+        <td>${escapeHtml(h.schoolName||"-")}</td>
+        <td>${escapeHtml(h.diseCode||"-")}</td>
+        <td>${isTeacherPremium(h) ? '⭐ ' + escapeHtml(h.planName||'Premium') : '🆓 Free'}</td>
+        <td>${presenceBadgeHtml(h)}</td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="viewHeadmasterDetails('${h.id}')">View</button>
+          <button class="btn btn-accent btn-sm" onclick="openChangePlanModal('headmasters','${h.id}')">Plan बदलें</button>
+          <button class="btn btn-outline btn-sm" onclick="resetHeadmasterPassword('${h.id}')">Send Reset Email</button>
+          ${isCurrentlyBanned(h)
+            ? `<button class="btn btn-success btn-sm" onclick="quickUnban('headmasters','${h.id}')">Unban</button>`
+            : `<button class="btn btn-danger btn-sm" onclick="openBanModal('headmasters','${h.id}','${jsAttr(h.name)}')">Suspend</button>`}
+          <button class="btn btn-danger btn-sm" onclick="deleteHeadmaster('${h.id}')">Delete</button>
+        </td>
+      </tr>`).join("") + `</table>`;
+
+  } else if(currentTab === "studentAppUsers"){
+    const filtered = allStudentAppUsers.filter(s => (s.displayName||"").toLowerCase().includes(search) || (s.email||"").toLowerCase().includes(search));
+    if(filtered.length === 0){ wrap.innerHTML = "<p>कोई Student नहीं मिला (अभी तक Load हुए records में)।</p>"; return; }
+    wrap.innerHTML = `<table class="list-table"><tr><th>Name</th><th>Email</th><th>Last Active</th><th>Status</th><th>Action</th></tr>` +
+      filtered.map(s => `<tr>
+        <td>${escapeHtml(s.displayName||"-")}</td>
+        <td>${escapeHtml(s.email||"-")}</td>
+        <td>${formatDate(s.lastActiveAt)}</td>
+        <td>${presenceBadgeHtml(s)}</td>
+        <td>
+          ${isCurrentlyBanned(s)
+            ? `<button class="btn btn-success btn-sm" onclick="quickUnban('studentAppUsers','${s.id}')">Unban</button>`
+            : `<button class="btn btn-danger btn-sm" onclick="openBanModal('studentAppUsers','${s.id}','${jsAttr(s.displayName||s.email)}')">Ban</button>`}
+        </td>
+      </tr>`).join("") + `</table>`;
+
+  } else if(currentTab === "idCards"){
+    const filtered = allIdCards.filter(c =>
+      (c.teacherRegNo||"").toLowerCase().includes(search) ||
+      (c.instituteName||"").toLowerCase().includes(search) ||
+      (c.class||"").toLowerCase().includes(search)
+    );
+    if(filtered.length === 0){ wrap.innerHTML = "<p>कोई Card Batch नहीं मिला।</p>"; return; }
+    wrap.innerHTML = `<table class="list-table"><tr><th>Type</th><th>Theme</th><th>Teacher Reg No</th><th>Institute</th><th>Class</th><th>Students</th><th>Date</th><th>Action</th></tr>` +
+      filtered.map(c => `<tr>
+        <td>${c.cardType === "admit" ? "🎫 Admit Card" : "🪪 ID Card"}</td>
+        <td>Theme ${c.themeId}</td>
+        <td>${escapeHtml(c.teacherRegNo||"-")}</td>
+        <td>${escapeHtml(c.instituteName||"-")}</td>
+        <td>${escapeHtml(c.class||"-")}</td>
+        <td>${(c.students||[]).length}</td>
+        <td>${formatDate(c.createdAt)}</td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="viewCardBatchAdmin('${c.id}')">View</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCardBatchAdmin('${c.id}')">Delete</button>
+        </td>
+      </tr>`).join("") + `</table>`;
+
+  } else if(currentTab === "papers"){
+    const filtered = allPapers.filter(p =>
+      (p.title||"").toLowerCase().includes(search) ||
+      (p.teacherName||"").toLowerCase().includes(search) ||
+      (p.diseCode||"").toLowerCase().includes(search)
+    );
+    if(filtered.length === 0){ wrap.innerHTML = "<p>कोई Paper नहीं मिला।</p>"; return; }
+    wrap.innerHTML = `<table class="list-table"><tr><th>Title</th><th>Teacher</th><th>Institute</th><th>Dise Code</th><th>Date</th><th>Action</th></tr>` +
+      filtered.map(p => `<tr>
+        <td>${escapeHtml(p.title)}</td><td>${escapeHtml(p.teacherName)}</td><td>${escapeHtml(p.instituteName||"-")}</td><td>${escapeHtml(p.diseCode||"-")}</td><td>${formatDate(p.createdAt)}</td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="viewPaper('${p.id}')">View</button>
+          <button class="btn btn-outline btn-sm" onclick="editPaper('${p.id}')">Edit</button>
+          <button class="btn btn-accent btn-sm" onclick="printPaper('${p.id}')">Print</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePaper('${p.id}')">Delete</button>
+        </td>
+      </tr>`).join("") + `</table>`;
+
+  } else if(currentTab === "notes"){
+    const filtered = allNotes.filter(n =>
+      (n.title||"").toLowerCase().includes(search) ||
+      (n.teacherName||"").toLowerCase().includes(search) ||
+      (n.diseCode||"").toLowerCase().includes(search)
+    );
+    if(filtered.length === 0){ wrap.innerHTML = "<p>कोई Note नहीं मिला।</p>"; return; }
+    wrap.innerHTML = `<table class="list-table"><tr><th>Title</th><th>Teacher</th><th>Institute</th><th>Dise Code</th><th>Date</th><th>Action</th></tr>` +
+      filtered.map(n => `<tr>
+        <td>${escapeHtml(n.title)}</td><td>${escapeHtml(n.teacherName)}</td><td>${escapeHtml(n.instituteName||"-")}</td><td>${escapeHtml(n.diseCode||"-")}</td><td>${formatDate(n.createdAt)}</td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="viewNote('${n.id}')">View</button>
+          <button class="btn btn-outline btn-sm" onclick="editNote('${n.id}')">Edit</button>
+          <button class="btn btn-accent btn-sm" onclick="printNote('${n.id}')">Print</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteNote('${n.id}')">Delete</button>
+        </td>
+      </tr>`).join("") + `</table>`;
+
+  } else if(currentTab === "marksheets"){
+    const filtered = allMarksheets.filter(m =>
+      (m.studentName||"").toLowerCase().includes(search) ||
+      (m.class||"").toLowerCase().includes(search) ||
+      (m.rollNo||"").toLowerCase().includes(search) ||
+      (m.teacherName||"").toLowerCase().includes(search) ||
+      (m.schoolName||"").toLowerCase().includes(search)
+    );
+    if(filtered.length === 0){ wrap.innerHTML = "<p>कोई Mark Sheet नहीं मिली।</p>"; return; }
+    wrap.innerHTML = `<table class="list-table"><tr><th>Student</th><th>Class</th><th>Roll No</th><th>Teacher</th><th>Result</th><th>Date</th><th>Action</th></tr>` +
+      filtered.map(m => `<tr>
+        <td>${escapeHtml(m.studentName)}</td><td>${escapeHtml(m.class)}</td><td>${escapeHtml(m.rollNo)}</td>
+        <td>${escapeHtml(m.teacherName)}</td><td><span class="badge ${m.result==='Pass'?'badge-pass':'badge-fail'}">${m.result}</span></td><td>${formatDate(m.createdAt)}</td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="viewMarksheet('${m.id}')">View</button>
+          <button class="btn btn-outline btn-sm" onclick="editMarksheet('${m.id}')">Edit</button>
+          <button class="btn btn-accent btn-sm" onclick="printMarksheet('${m.id}')">Print</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteMarksheet('${m.id}')">Delete</button>
+        </td>
+      </tr>`).join("") + `</table>`;
+
+  } else if(currentTab === "testResults"){
+    const filtered = allTestResults.filter(r =>
+      (r.studentName||"").toLowerCase().includes(search) ||
+      (r.class||"").toLowerCase().includes(search) ||
+      (r.rollNo||"").toLowerCase().includes(search) ||
+      (r.teacherName||"").toLowerCase().includes(search)
+    );
+    if(filtered.length === 0){ wrap.innerHTML = "<p>कोई Test Result नहीं मिला।</p>"; return; }
+    wrap.innerHTML = `<table class="list-table"><tr><th>Student</th><th>Class</th><th>Section</th><th>Teacher</th><th>Result</th><th>Public</th><th>Date</th><th>Action</th></tr>` +
+      filtered.map(r => `<tr>
+        <td>${escapeHtml(r.studentName)}</td><td>${escapeHtml(r.class)}</td><td>${escapeHtml(r.section)}</td>
+        <td>${escapeHtml(r.teacherName)}</td><td><span class="badge ${r.result==='Pass'?'badge-pass':'badge-fail'}">${r.result}</span></td>
+        <td><span class="badge ${r.public?'badge-public':'badge-private'}">${r.public?'Public':'Private'}</span></td>
+        <td>${formatDate(r.createdAt)}</td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="viewTestResult('${r.id}')">View</button>
+          <button class="btn btn-accent btn-sm" onclick="printTestResult('${r.id}')">Print</button>
+          <button class="btn btn-outline btn-sm" onclick="toggleTestResultPublic('${r.id}')">${r.public? 'Make Private':'Make Public'}</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTestResult('${r.id}')">Delete</button>
+        </td>
+      </tr>`).join("") + `</table>`;
+  }
+};
+
+
+/* =====================================================================
+   ADMIN APP - PART 4: TEACHER MANAGEMENT (view / reset password / delete / delete all)
+   ===================================================================== */
+window.viewTeacherDetails = function(id){
+  const t = allTeachers.find(x => x.id === id);
+  if(!t) return;
+  const paid = isTeacherPremium(t);
+  const daysLeft = t.premiumUntil ? Math.max(0, Math.ceil((new Date(t.premiumUntil).getTime() - Date.now())/(1000*60*60*24))) : null;
+  const html = `
+    <h3>👩‍🏫 Teacher Details</h3>
+    <div class="compare-box">
+      <div class="kv"><b>Name:</b> <span>${escapeHtml(t.name)}</span></div>
+      <div class="kv"><b>Registration Number:</b> <span>${escapeHtml(t.registrationNumber||t.id)}</span></div>
+      <div class="kv"><b>Mobile Number:</b> <span>${escapeHtml(t.number)}</span></div>
+      <div class="kv"><b>Email:</b> <span>${escapeHtml(t.email||"-")}</span></div>
+      <div class="kv"><b>Teacher Type:</b> <span>${escapeHtml(t.teacherType||"-")}</span></div>
+      <div class="kv"><b>DISE Code:</b> <span>${escapeHtml(t.diseCode||"-")}</span></div>
+      <div class="kv"><b>School/Coaching Name:</b> <span>${escapeHtml(t.instituteName)}</span></div>
+      <div class="kv"><b>Address:</b> <span>${escapeHtml(t.address)}</span></div>
+      <div class="kv"><b>Registered On:</b> <span>${formatDate(t.createdAt)}</span></div>
+      <div class="kv"><b>Plan:</b> <span>${paid ? '⭐ Paid — ' + escapeHtml(t.planName||'Premium') : '🆓 Free'}${daysLeft !== null ? ' (' + daysLeft + ' दिन बचे)' : ''}</span></div>
+      <div class="kv"><b>Referral Count:</b> <span>${t.referralCount||0}</span></div>
+      <div class="kv"><b>Print Quota:</b> <span>${paid ? "Premium — कोई सीमा नहीं" : Math.max(0, (t.freePrintLimitOverride != null ? t.freePrintLimitOverride : appSettings.globalFreePrintLimit) - (t.freePrintsUsed||0)) + " बचे / " + (t.freePrintLimitOverride != null ? t.freePrintLimitOverride : appSettings.globalFreePrintLimit) + " में से"}</span></div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num">${t.papersCount||0}</div><div class="lbl">Papers Printed</div></div>
+      <div class="stat-box"><div class="num">${t.notesCount||0}</div><div class="lbl">Notes Made</div></div>
+      <div class="stat-box"><div class="num">${t.marksheetsCount||0}</div><div class="lbl">Mark Sheets Made</div></div>
+      <div class="stat-box"><div class="num">${t.testResultsCount||0}</div><div class="lbl">Test Results Made</div></div>
+      <div class="stat-box"><div class="num">${t.cardsCount||0}</div><div class="lbl">ID/Admit Cards Made</div></div>
+      <div class="stat-box"><div class="num">${teacherPrintTotal(t)}</div><div class="lbl">Total Print</div></div>
+    </div>
+    <div class="footer-actions">
+      <button class="btn btn-accent btn-sm" onclick="closeModal(); openChangePlanModal('teachers','${t.id}')">Plan बदलें</button>
+      <button class="btn btn-outline btn-sm" onclick="resetTeacherPassword('${t.id}')">Send Password Reset Email</button>
+    </div>
+  `;
+  openModal(html, true);
+};
+
+// [बदलाव 11] Admin किसी भी Teacher का Plan कभी भी बदल सके — Free⇄Paid या कोई भी Plan
+window.openChangePlanModal = function(coll, teacherId){
+  const t = getTabArray(coll).find(x => x.id === teacherId);
+  if(!t) return;
+  const html = `
+    <h3>💳 ${escapeHtml(t.name)} का Plan बदलें</h3>
+    <label>Plan चुनें</label>
+    <select id="planSelect">
+      <option value="free">🆓 Free</option>
+      ${premiumPlansList.map(p => `<option value="${p.id}">${escapeHtml(p.name)} (₹${p.price} / ${p.durationDays} दिन)</option>`).join("")}
+      <option value="custom">✏️ Custom (मैन्युअल दिन डालें)</option>
+    </select>
+    <div id="customDaysWrap" class="hidden">
+      <label>कितने दिनों के लिए Premium चाहिए?</label>
+      <input type="number" id="customDaysInput" placeholder="जैसे: 30">
+    </div>
+    <p style="font-size:12px;color:#666;">अभी: ${isTeacherPremium(t) ? '⭐ Paid — ' + escapeHtml(t.planName||'Premium') : '🆓 Free'}</p>
+    <div class="footer-actions">
+      <button class="btn btn-primary btn-sm" onclick="applyPlanChange('${coll}','${t.id}')">Save</button>
+    </div>
+  `;
+  openModal(html, true);
+  document.getElementById("planSelect").addEventListener("change", function(){
+    document.getElementById("customDaysWrap").classList.toggle("hidden", this.value !== "custom");
+  });
+};
+
+window.applyPlanChange = async function(coll, teacherId){
+  const choice = document.getElementById("planSelect").value;
+  let updateData;
+
+  if(choice === "free"){
+    updateData = { plan: "free", premiumUntil: null, planId: null, planName: null };
+  } else if(choice === "custom"){
+    const days = Number(document.getElementById("customDaysInput").value);
+    if(!days || days <= 0){ alert("कृपया सही दिन (Days) डालें"); return; }
+    const until = new Date(); until.setDate(until.getDate() + days);
+    updateData = { plan: "premium", premiumUntil: until.toISOString(), planId: "admin_custom", planName: "Admin Custom (" + days + " दिन)" };
+  } else {
+    const plan = premiumPlansList.find(p => p.id === choice);
+    if(!plan){ alert("Plan नहीं मिला"); return; }
+    const until = new Date(); until.setDate(until.getDate() + plan.durationDays);
+    updateData = { plan: "premium", premiumUntil: until.toISOString(), planId: plan.id, planName: plan.name };
+  }
+
+  try{
+    await fs.updateDoc(fs.doc(db, coll, teacherId), updateData);
+    const arr = getTabArray(coll);
+    const idx = arr.findIndex(x => x.id === teacherId);
+    if(idx !== -1) arr[idx] = { ...arr[idx], ...updateData };
+    closeModal();
+    renderCurrentTab();
+    alert("Plan Update हो गया ✅");
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+// NOTE: Admin can no longer set a teacher's password directly — passwords
+// live only in Firebase Auth, and client-side code has no privilege to set
+// another user's password (that needs the Admin SDK on a trusted server).
+// Instead, Admin triggers Firebase's own secure reset-email flow on the
+// teacher's behalf, exactly like the teacher's own "Forgot Password".
+window.resetTeacherPassword = async function(id){
+  const t = allTeachers.find(x => x.id === id);
+  if(!t) return;
+  if(!t.email){
+    alert("इस Teacher के प्रोफ़ाइल में Email नहीं है, इसलिए Password Reset Email नहीं भेजी जा सकती। कृपया Teacher को अपनी Profile में Email जोड़ने के लिए कहें।");
+    return;
+  }
+  if(!confirm(`${t.name} के Email (${t.email}) पर Password Reset Link भेजें?`)) return;
+  try{
+    await sendPasswordResetEmail(auth, t.email);
+    alert("Password Reset Email भेज दी गई है ✅");
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+window.deleteTeacher = async function(id){
+  if(!confirm("क्या आप इस Teacher को (और उनके सभी Students/Papers/Mark Sheets/Test Results को) Delete करना चाहते हैं?")) return;
+  await cascadeDeleteTeacherData(id);
+  await fs.deleteDoc(fs.doc(db, "teachers", id));
+  await loadTabPage(currentTab, true);
+};
+
+/* =====================================================================
+   HEADMASTERS TAB — Headmaster App के "headmasters" Collection के लिए
+   (Teachers Tab जैसा ही View/Password Reset/Ban-Suspend/Delete कंट्रोल)
+   ===================================================================== */
+window.viewHeadmasterDetails = function(id){
+  const h = allHeadmasters.find(x => x.id === id);
+  if(!h) return;
+  const html = `
+    <h3>🏫 Headmaster Details</h3>
+    <div class="compare-box">
+      <div class="kv"><b>Name:</b> <span>${escapeHtml(h.name)}</span></div>
+      <div class="kv"><b>Registration Number:</b> <span>${escapeHtml(h.id)}</span></div>
+      <div class="kv"><b>Mobile Number:</b> <span>${escapeHtml(h.number)}</span></div>
+      <div class="kv"><b>Email:</b> <span>${escapeHtml(h.email||"-")}</span></div>
+      <div class="kv"><b>School Name:</b> <span>${escapeHtml(h.schoolName||"-")}</span></div>
+      <div class="kv"><b>DISE Code:</b> <span>${escapeHtml(h.diseCode||"-")}</span></div>
+      <div class="kv"><b>Address:</b> <span>${escapeHtml(h.address||"-")}</span></div>
+      <div class="kv"><b>Registered On:</b> <span>${formatDate(h.createdAt)}</span></div>
+    </div>
+    <div class="footer-actions">
+      <button class="btn btn-outline btn-sm" onclick="resetHeadmasterPassword('${h.id}')">Send Password Reset Email</button>
+    </div>
+  `;
+  openModal(html, true);
+};
+
+window.resetHeadmasterPassword = async function(id){
+  const h = allHeadmasters.find(x => x.id === id);
+  if(!h) return;
+  if(!h.email){
+    alert("इस Headmaster के प्रोफ़ाइल में Email नहीं है, इसलिए Password Reset Email नहीं भेजी जा सकती।");
+    return;
+  }
+  if(!confirm(`${h.name} के Email (${h.email}) पर Password Reset Link भेजें?`)) return;
+  try{
+    await sendPasswordResetEmail(auth, h.email);
+    alert("Password Reset Email भेज दी गई है ✅");
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+};
+
+window.deleteHeadmaster = async function(id){
+  // ध्यान दें: Headmaster को Delete करने से उसके स्कूल के Teachers/Students पर कोई असर
+  // नहीं पड़ता (वो सिर्फ DISE Code से जुड़े होते हैं, Headmaster के Document से नहीं) —
+  // इसलिए यहाँ Teacher वाला Cascade Delete जानबूझकर नहीं किया गया।
+  if(!confirm("क्या आप इस Headmaster Account को Delete करना चाहते हैं? (इससे उनके स्कूल के Teachers/Students पर कोई असर नहीं पड़ेगा)")) return;
+  await fs.deleteDoc(fs.doc(db, "headmasters", id));
+  await loadTabPage(currentTab, true);
+};
+
+async function cascadeDeleteTeacherData(regNo){
+  const sQ = fs.query(fs.collection(db,"students"), fs.where("teacherRegNo","==",regNo));
+  const pQ = fs.query(fs.collection(db,"papers"), fs.where("teacherRegNo","==",regNo));
+  const nQ = fs.query(fs.collection(db,"notes"), fs.where("teacherRegNo","==",regNo)); // [बदलाव 52]
+  const mQ = fs.query(fs.collection(db,"marksheets"), fs.where("teacherRegNo","==",regNo));
+  const trQ = fs.query(fs.collection(db,"testResults"), fs.where("teacherRegNo","==",regNo));
+  const cQ = fs.query(fs.collection(db,"idCards"), fs.where("teacherRegNo","==",regNo)); // [बदलाव 50]
+  const etQ = fs.query(fs.collection(db,"examTimetables"), fs.where("teacherRegNo","==",regNo)); // [बदलाव 59]
+  const atQ = fs.query(fs.collection(db,"attendance"), fs.where("teacherRegNo","==",regNo)); // [बदलाव 53]
+  const [sSnap, pSnap, nSnap, mSnap, trSnap, cSnap, etSnap, atSnap] = await Promise.all([
+    fs.getDocs(sQ), fs.getDocs(pQ), fs.getDocs(nQ), fs.getDocs(mQ), fs.getDocs(trQ), fs.getDocs(cQ), fs.getDocs(etQ), fs.getDocs(atQ)
+  ]);
+  const deletions = [];
+  sSnap.forEach(d => deletions.push(fs.deleteDoc(fs.doc(db,"students",d.id))));
+  pSnap.forEach(d => deletions.push(fs.deleteDoc(fs.doc(db,"papers",d.id))));
+  nSnap.forEach(d => deletions.push(fs.deleteDoc(fs.doc(db,"notes",d.id))));
+  mSnap.forEach(d => deletions.push(fs.deleteDoc(fs.doc(db,"marksheets",d.id))));
+  trSnap.forEach(d => deletions.push(fs.deleteDoc(fs.doc(db,"testResults",d.id))));
+  cSnap.forEach(d => deletions.push(fs.deleteDoc(fs.doc(db,"idCards",d.id))));
+  etSnap.forEach(d => deletions.push(fs.deleteDoc(fs.doc(db,"examTimetables",d.id))));
+  atSnap.forEach(d => deletions.push(fs.deleteDoc(fs.doc(db,"attendance",d.id))));
+  await Promise.all(deletions);
+}
+
+/* =====================================================================
+   [बदलाव 50] BAN / UNBAN SYSTEM — Teachers ("teachers" collection) और
+   Students ("studentAppUsers" collection) दोनों के लिए एक ही Modal/Logic।
+   Ban होने पर उस Teacher/Student App में लॉगिन ही नहीं हो पाता — वहां यह
+   कारण और बचा हुआ समय एक सुंदर मैसेज में दिखता है (Teacher/Student App में
+   पहले से Wire किया जा चुका है)।
+   ===================================================================== */
+function isCurrentlyBanned(data){
+  return !!(data.banned && data.banUntil && new Date(data.banUntil) > new Date());
+}
+function remainingBanText(banUntil){
+  const ms = new Date(banUntil) - new Date();
+  if(ms <= 0) return "समय पूरा हो गया";
+  const hrs = Math.ceil(ms / (1000*60*60));
+  return hrs >= 24 ? Math.ceil(hrs/24) + " दिन बाकी" : hrs + " घंटे बाकी";
+}
+function isOnlineNow(lastActiveAt){
+  if(!lastActiveAt) return false;
+  return (new Date() - new Date(lastActiveAt)) < 5*60*1000; // 5 मिनट के अंदर Heartbeat = Online
+}
+function presenceBadgeHtml(data){
+  if(isCurrentlyBanned(data)) return '<span class="badge badge-rejected">⛔ Banned</span>';
+  return isOnlineNow(data.lastActiveAt)
+    ? '<span class="badge badge-pass">🟢 Online</span>'
+    : '<span class="badge badge-private">⚪ Offline</span>';
+}
+// onclick='...()' के अंदर Name Pass करते समय अगर उसमें ' (apostrophe) हो तो वह Inline JS
+// तोड़ सकता है — इसलिए Name जहां भी single-quoted onclick में जाता है वहां यह इस्तेमाल होता है।
+function jsAttr(str){ return escapeAttr(str).replace(/'/g, "&#39;"); }
+
+window.openBanModal = function(coll, id, name){
+  openModal(`
+    <h3>⛔ Ban करें: ${escapeHtml(name)}</h3>
+    <label>कारण (Reason)</label>
+    <textarea id="banReasonInput" placeholder="जैसे: गलत जानकारी बार-बार डालना"></textarea>
+    <label>कितने समय के लिए?</label>
+    <div class="row">
+      <input type="number" id="banDurationValue" value="1" min="1">
+      <select id="banDurationUnit">
+        <option value="hours">घंटे</option>
+        <option value="days" selected>दिन</option>
+      </select>
+    </div>
+    <div id="banModalMsg"></div>
+    <div class="footer-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmBan('${coll}','${id}')">Ban करें</button>
+    </div>
+  `, false);
+};
+window.confirmBan = async function(coll, id){
+  const reason = document.getElementById("banReasonInput").value.trim();
+  const value = parseFloat(document.getElementById("banDurationValue").value);
+  const unit = document.getElementById("banDurationUnit").value;
+  const msgBox = document.getElementById("banModalMsg");
+  if(!reason){ msgBox.innerHTML = '<div class="msg msg-error">कृपया कारण लिखें</div>'; return; }
+  if(!value || value <= 0){ msgBox.innerHTML = '<div class="msg msg-error">सही समय डालें</div>'; return; }
+  const hours = unit === "days" ? value*24 : value;
+  const banUntil = new Date(Date.now() + hours*60*60*1000).toISOString();
+  try{
+    await fs.updateDoc(fs.doc(db, coll, id), { banned:true, banReason:reason, banUntil });
+    closeModal();
+    // [फिक्स] पहले सिर्फ "teachers"/"studentAppUsers" को समझता था — अब coll का नाम ही सीधे
+    // Tab Array का नाम भी है (teachers/studentAppUsers/headmasters तीनों में यह सच है),
+    // इसलिए यह अब किसी भी नए Collection (जैसे headmasters) के लिए भी अपने-आप काम करता है।
+    const idx = getTabArray(coll).findIndex(x => x.id === id);
+    if(idx !== -1) getTabArray(coll)[idx] = { ...getTabArray(coll)[idx], banned:true, banReason:reason, banUntil };
+    renderCurrentTab();
+  }catch(err){
+    msgBox.innerHTML = '<div class="msg msg-error">Error: ' + err.message + '</div>';
+  }
+};
+window.quickUnban = async function(coll, id){
+  await fs.updateDoc(fs.doc(db, coll, id), { banned:false, banReason:null, banUntil:null });
+  const idx = getTabArray(coll).findIndex(x => x.id === id);
+  if(idx !== -1){
+    const arr = getTabArray(coll);
+    arr[idx] = { ...arr[idx], banned:false, banReason:null, banUntil:null };
+  }
+  if(currentTab === "banned"){ loadBannedUsers().then(() => renderBannedTab(document.getElementById("listWrap"))); }
+  else renderCurrentTab();
+};
+window.extendBan = async function(coll, id, hoursDelta){
+  const snap = await fs.getDoc(fs.doc(db, coll, id));
+  if(!snap.exists()) return;
+  const data = snap.data();
+  const currentUntil = data.banUntil ? new Date(data.banUntil) : new Date();
+  const newUntil = new Date(currentUntil.getTime() + hoursDelta*60*60*1000);
+  if(newUntil <= new Date()){
+    await fs.updateDoc(fs.doc(db, coll, id), { banned:false, banReason:null, banUntil:null });
+  } else {
+    await fs.updateDoc(fs.doc(db, coll, id), { banUntil: newUntil.toISOString() });
+  }
+  loadBannedUsers().then(() => renderBannedTab(document.getElementById("listWrap")));
+};
+
+/* ---- BANNED TAB (हमेशा ताज़ा — कोई Pagination नहीं, आमतौर पर छोटी List होती है) ---- */
+let bannedTeachersList = [], bannedStudentsList = [], bannedHeadmastersList = [];
+async function loadBannedUsers(){
+  const [tSnap, sSnap, hSnap] = await Promise.all([
+    fs.getDocs(fs.query(fs.collection(db,"teachers"), fs.where("banned","==",true))),
+    fs.getDocs(fs.query(fs.collection(db,"studentAppUsers"), fs.where("banned","==",true))),
+    fs.getDocs(fs.query(fs.collection(db,"headmasters"), fs.where("banned","==",true)))
+  ]);
+  bannedTeachersList = tSnap.docs.map(d => ({ id:d.id, ...d.data() })).filter(isCurrentlyBanned);
+  bannedStudentsList = sSnap.docs.map(d => ({ id:d.id, ...d.data() })).filter(isCurrentlyBanned);
+  bannedHeadmastersList = hSnap.docs.map(d => ({ id:d.id, ...d.data() })).filter(isCurrentlyBanned);
+}
+function renderBannedTab(wrap){
+  wrap.innerHTML = `
+    <h3 style="margin-top:0;color:var(--primary-dark);">⛔ Banned Teachers (${bannedTeachersList.length})</h3>
+    ${bannedTeachersList.length === 0 ? "<p style='color:#999;'>कोई Teacher Banned नहीं है।</p>" : bannedTeachersList.map(t => bannedRowHtml('teachers', t.id, t.name, t)).join("")}
+    <h3 style="color:var(--primary-dark);margin-top:22px;">⛔ Suspended Headmasters (${bannedHeadmastersList.length})</h3>
+    ${bannedHeadmastersList.length === 0 ? "<p style='color:#999;'>कोई Headmaster Suspend नहीं है।</p>" : bannedHeadmastersList.map(h => bannedRowHtml('headmasters', h.id, h.name, h)).join("")}
+    <h3 style="color:var(--primary-dark);margin-top:22px;">⛔ Banned Students (${bannedStudentsList.length})</h3>
+    ${bannedStudentsList.length === 0 ? "<p style='color:#999;'>कोई Student Banned नहीं है।</p>" : bannedStudentsList.map(s => bannedRowHtml('studentAppUsers', s.id, s.displayName||s.email, s)).join("")}
+  `;
+}
+function bannedRowHtml(coll, id, name, data){
+  return `
+    <div class="compare-box" style="margin-bottom:10px;">
+      <div class="kv"><b>${escapeHtml(name)}</b></div>
+      <div class="kv"><span>कारण:</span> <span>${escapeHtml(data.banReason||"-")}</span></div>
+      <div class="kv"><span>${remainingBanText(data.banUntil)}</span> <span>तक: ${formatDate(data.banUntil)}</span></div>
+      <div class="footer-actions" style="justify-content:flex-start;margin-top:10px;">
+        <button class="btn btn-outline btn-sm" onclick="extendBan('${coll}','${id}',24)">+1 दिन</button>
+        <button class="btn btn-outline btn-sm" onclick="extendBan('${coll}','${id}',-24)">-1 दिन</button>
+        <button class="btn btn-accent btn-sm" onclick="openBanModal('${coll}','${id}','${jsAttr(name)}')">Edit</button>
+        <button class="btn btn-success btn-sm" onclick="quickUnban('${coll}','${id}')">Unban</button>
+      </div>
+    </div>
+  `;
+}
+
+/* =====================================================================
+   [बदलाव 50] ID / ADMIT CARDS TAB (View + Delete) — Teacher App के Card
+   Print Module से बने Batches यहां दिखते हैं।
+   ===================================================================== */
+window.viewCardBatchAdmin = function(id){
+  const c = allIdCards.find(x => x.id === id);
+  if(!c) return;
+  const studentsHtml = (c.students||[]).map(s => `
+    <div class="compare-box" style="margin-bottom:8px;">
+      <div class="kv"><b>${escapeHtml(s.name)}</b></div>
+      <div class="kv"><span>Roll No:</span><span>${escapeHtml(s.rollNo||"-")}</span></div>
+      <div class="kv"><span>Class:</span><span>${escapeHtml(s.class||"-")}</span></div>
+      <div class="kv"><span>Father:</span><span>${escapeHtml(s.fatherName||"-")}</span></div>
+      <div class="kv"><span>Mother:</span><span>${escapeHtml(s.motherName||"-")}</span></div>
+      <div class="kv"><span>Mobile:</span><span>${escapeHtml(s.mobile||"-")}</span></div>
+      ${s.address ? `<div class="kv"><span>Address:</span><span>${escapeHtml(s.address)}</span></div>` : ""}
+      ${s.hobby ? `<div class="kv"><span>Hobby:</span><span>${escapeHtml(s.hobby)}</span></div>` : ""}
+    </div>
+  `).join("");
+  openModal(`
+    <h3>${c.cardType === "admit" ? "🎫 Admit Cards" : "🪪 ID Cards"} — Theme ${c.themeId}</h3>
+    <p style="font-size:13px;color:#666;">Teacher Reg No: ${escapeHtml(c.teacherRegNo)} | Institute: ${escapeHtml(c.instituteName||"-")} | Class: ${escapeHtml(c.class||"-")}</p>
+    ${studentsHtml}
+  `, true);
+};
+window.deleteCardBatchAdmin = async function(id){
+  if(!confirm("क्या आप इस Card Batch को Delete करना चाहते हैं?")) return;
+  await fs.deleteDoc(fs.doc(db, "idCards", id));
+  allIdCards = allIdCards.filter(x => x.id !== id);
+  renderCurrentTab();
+};
+
+window.deleteAllCurrentTab = async function(){
+  if(currentTab === "teachers"){
+    if(!confirm(`क्या आप अभी Load हुए सभी ${allTeachers.length} Teachers (और उनका सारा data) Delete करना चाहते हैं? यह वापस नहीं होगा! (जो Records अभी Load नहीं हुए वो प्रभावित नहीं होंगे — पहले "Load More" से बाकी Load करें अगर पूरा डेटा हटाना है)`)) return;
+    for(const t of allTeachers){ await cascadeDeleteTeacherData(t.id); await fs.deleteDoc(fs.doc(db,"teachers",t.id)); }
+  } else if(currentTab === "papers"){
+    if(!confirm(`क्या आप अभी Load हुए सभी ${allPapers.length} Papers Delete करना चाहते हैं?`)) return;
+    for(const p of allPapers){ await fs.deleteDoc(fs.doc(db,"papers",p.id)); }
+  } else if(currentTab === "notes"){
+    if(!confirm(`क्या आप अभी Load हुए सभी ${allNotes.length} Notes Delete करना चाहते हैं?`)) return;
+    for(const n of allNotes){ await fs.deleteDoc(fs.doc(db,"notes",n.id)); }
+  } else if(currentTab === "marksheets"){
+    if(!confirm(`क्या आप अभी Load हुए सभी ${allMarksheets.length} Mark Sheets Delete करना चाहते हैं?`)) return;
+    for(const m of allMarksheets){ await fs.deleteDoc(fs.doc(db,"marksheets",m.id)); }
+  } else if(currentTab === "testResults"){
+    if(!confirm(`क्या आप अभी Load हुए सभी ${allTestResults.length} Test Results Delete करना चाहते हैं?`)) return;
+    for(const r of allTestResults){ await fs.deleteDoc(fs.doc(db,"testResults",r.id)); }
+  } else if(currentTab === "idCards"){
+    if(!confirm(`क्या आप अभी Load हुए सभी ${allIdCards.length} Card Batches Delete करना चाहते हैं?`)) return;
+    for(const c of allIdCards){ await fs.deleteDoc(fs.doc(db,"idCards",c.id)); }
+  } else if(currentTab === "studentAppUsers"){
+    if(!confirm(`क्या आप अभी Load हुए सभी ${allStudentAppUsers.length} Student Records Delete करना चाहते हैं? (इससे सिर्फ Admin App की Record मिटेगी, उनका Google Login प्रभावित नहीं होगा)`)) return;
+    for(const s of allStudentAppUsers){ await fs.deleteDoc(fs.doc(db,"studentAppUsers",s.id)); }
+  }
+  await loadTabPage(currentTab, true);
+};
+
+
+/* =====================================================================
+   ADMIN APP - PART 5: PAPER VIEW / EDIT / PRINT / DELETE
+   ===================================================================== */
+window.viewPaper = function(id){
+  const p = allPapers.find(x=>x.id===id); if(!p) return;
+  openModal(`<h3>${escapeHtml(p.title)}</h3><div class="print-sheet">${topTeacherLineHtml(p.teacherName, p.mobile)}<div>${p.htmlContent}</div></div>`, true);
+};
+
+window.printPaper = function(id){
+  const p = allPapers.find(x=>x.id===id); if(!p) return;
+  printRaw(`<div class="print-sheet">${watermarkHtml(p.watermark)}${topTeacherLineHtml(p.teacherName, p.mobile)}<h2>${escapeHtml(p.title)}</h2>${p.diseCode ? `<div class="sub">DISE Code: ${escapeHtml(p.diseCode)}</div>`:""}<div>${p.htmlContent}</div></div>`);
+};
+
+window.deletePaper = async function(id){
+  if(!confirm("क्या आप इस Paper को Delete करना चाहते हैं?")) return;
+  await fs.deleteDoc(fs.doc(db,"papers",id));
+  await loadTabPage(currentTab, true);
+};
+
+window.editPaper = function(id){
+  const p = allPapers.find(x=>x.id===id); if(!p) return;
+  const html = `
+    <h3>Edit Paper</h3>
+    <label>Title</label>
+    <input type="text" id="editPaperTitle" value="${escapeAttr(p.title)}">
+    <label>DISE Code</label>
+    <input type="text" id="editPaperDisc" value="${escapeAttr(p.diseCode||"")}">
+    <div class="toolbar" style="margin-top:10px;">
+      <button onclick="fmtModal('bold')"><b>B</b></button>
+      <button onclick="fmtModal('italic')"><i>I</i></button>
+      <button onclick="fmtModal('underline')"><u>U</u></button>
+      <input type="color" onchange="fmtModal('foreColor', this.value)">
+      <input type="color" onchange="fmtModal('hiliteColor', this.value)">
+    </div>
+    <div id="editorAreaModal" contenteditable="true">${p.htmlContent}</div>
+    <div class="footer-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="savePaperEdit('${id}')">Save Changes</button>
+    </div>
+  `;
+  openModal(html, false);
+};
+
+window.fmtModal = function(cmd, value){
+  document.getElementById("editorAreaModal").focus();
+  document.execCommand(cmd, false, value || null);
+};
+
+window.savePaperEdit = async function(id){
+  const title = document.getElementById("editPaperTitle").value.trim();
+  const diseCode = document.getElementById("editPaperDisc").value.trim();
+  const htmlContent = document.getElementById("editorAreaModal").innerHTML;
+  await fs.updateDoc(fs.doc(db,"papers",id), { title, diseCode, htmlContent });
+  closeModal();
+  await loadTabPage(currentTab, true);
+};
+
+/* =====================================================================
+   [बदलाव 52] NOTES VIEW / EDIT / PRINT / DELETE — बिल्कुल Papers जैसा ही
+   पैटर्न, क्योंकि Notes का Data-Structure Papers जैसा ही है। पहले Admin App
+   में "notes" Collection के लिए कोई Tab ही नहीं था — Teacher App का अलग
+   Notes फ़ीचर पूरी तरह Admin की नज़र से बाहर था।
+   ===================================================================== */
+window.viewNote = function(id){
+  const n = allNotes.find(x=>x.id===id); if(!n) return;
+  openModal(`<h3>${escapeHtml(n.title)}</h3><div class="print-sheet">${topTeacherLineHtml(n.teacherName, n.mobile)}<div>${n.htmlContent}</div></div>`, true);
+};
+
+window.printNote = function(id){
+  const n = allNotes.find(x=>x.id===id); if(!n) return;
+  printRaw(`<div class="print-sheet">${watermarkHtml(n.watermark)}${topTeacherLineHtml(n.teacherName, n.mobile)}<h2>${escapeHtml(n.title)}</h2>${n.diseCode ? `<div class="sub">DISE Code: ${escapeHtml(n.diseCode)}</div>`:""}<div>${n.htmlContent}</div></div>`);
+};
+
+window.deleteNote = async function(id){
+  if(!confirm("क्या आप इस Note को Delete करना चाहते हैं?")) return;
+  await fs.deleteDoc(fs.doc(db,"notes",id));
+  await loadTabPage(currentTab, true);
+};
+
+window.editNote = function(id){
+  const n = allNotes.find(x=>x.id===id); if(!n) return;
+  const html = `
+    <h3>Edit Note</h3>
+    <label>Title</label>
+    <input type="text" id="editNoteTitle" value="${escapeAttr(n.title)}">
+    <label>DISE Code</label>
+    <input type="text" id="editNoteDisc" value="${escapeAttr(n.diseCode||"")}">
+    <div class="toolbar" style="margin-top:10px;">
+      <button onclick="fmtModal('bold')"><b>B</b></button>
+      <button onclick="fmtModal('italic')"><i>I</i></button>
+      <button onclick="fmtModal('underline')"><u>U</u></button>
+      <input type="color" onchange="fmtModal('foreColor', this.value)">
+      <input type="color" onchange="fmtModal('hiliteColor', this.value)">
+    </div>
+    <div id="editorAreaModal" contenteditable="true">${n.htmlContent}</div>
+    <div class="footer-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveNoteEdit('${id}')">Save Changes</button>
+    </div>
+  `;
+  openModal(html, false);
+};
+
+window.saveNoteEdit = async function(id){
+  const title = document.getElementById("editNoteTitle").value.trim();
+  const diseCode = document.getElementById("editNoteDisc").value.trim();
+  const htmlContent = document.getElementById("editorAreaModal").innerHTML;
+  await fs.updateDoc(fs.doc(db,"notes",id), { title, diseCode, htmlContent });
+  closeModal();
+  await loadTabPage(currentTab, true);
+};
+
+window.viewMarksheet = function(id){
+  const m = allMarksheets.find(x=>x.id===id); if(!m) return;
+  openModal(marksheetHtml(m), true);
+};
+
+window.printMarksheet = function(id){
+  const m = allMarksheets.find(x=>x.id===id); if(!m) return;
+  printRaw(marksheetHtml(m));
+};
+
+window.deleteMarksheet = async function(id){
+  if(!confirm("क्या आप इस Mark Sheet को Delete करना चाहते हैं?")) return;
+  await fs.deleteDoc(fs.doc(db,"marksheets",id));
+  await loadTabPage(currentTab, true);
+};
+
+let editSubjectCount = 0;
+window.editMarksheet = function(id){
+  const m = allMarksheets.find(x=>x.id===id); if(!m) return;
+  editSubjectCount = 0;
+  const subjectsHtml = m.subjects.map(s => subjectRowHtml(s.name, s.max, s.obtained)).join("");
+  const html = `
+    <h3>Edit Mark Sheet</h3>
+    <div class="row">
+      <div><label>Student Name</label><input type="text" id="editStudentName" value="${escapeAttr(m.studentName)}"></div>
+      <div><label>Father's Name</label><input type="text" id="editFatherName" value="${escapeAttr(m.fatherName)}"></div>
+      <div><label>Mother's Name</label><input type="text" id="editMotherName" value="${escapeAttr(m.motherName||"")}"></div>
+    </div>
+    <div class="row">
+      <div><label>Class</label><input type="text" id="editClass" value="${escapeAttr(m.class)}"></div>
+      <div><label>Roll No.</label><input type="text" id="editRollNo" value="${escapeAttr(m.rollNo)}"></div>
+      <div><label>School Name</label><input type="text" id="editSchoolName" value="${escapeAttr(m.schoolName)}"></div>
+    </div>
+    <div class="row">
+      <div><label>Disc Code</label><input type="text" id="editDiscCode" value="${escapeAttr(m.discCode||"")}"></div>
+      <div><label>Exam Type</label><input type="text" id="editExamType" value="${escapeAttr(m.examType)}"></div>
+      <div><label>Pass Percentage</label><input type="number" id="editPassPercent" value="${m.passPercentage}"></div>
+    </div>
+    <h4>Subjects</h4>
+    <div id="editSubjectsWrap">${subjectsHtml}</div>
+    <button class="btn btn-outline btn-sm" onclick="addEditSubjectRow()">+ Add Subject</button>
+    <label>Remarks</label>
+    <textarea id="editRemarks">${escapeHtml(m.remarks||"")}</textarea>
+    <div class="footer-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveMarksheetEdit('${id}')">Save Changes</button>
+    </div>
+  `;
+  openModal(html, false);
+};
+
+function subjectRowHtml(name, max, obtained){
+  editSubjectCount++;
+  const rowId = "editsubj_" + editSubjectCount;
+  return `<div class="subject-row" id="${rowId}">
+    <input type="text" class="e-subj-name" value="${escapeAttr(name)}" placeholder="Subject">
+    <input type="number" class="e-subj-max" value="${max}" placeholder="Max">
+    <input type="number" class="e-subj-obt" value="${obtained}" placeholder="Obtained">
+    <button class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove()">✕</button>
+  </div>`;
+}
+window.addEditSubjectRow = function(){
+  document.getElementById("editSubjectsWrap").insertAdjacentHTML("beforeend", subjectRowHtml("", 100, ""));
+};
+
+window.saveMarksheetEdit = async function(id){
+  const rows = document.querySelectorAll("#editSubjectsWrap .subject-row");
+  const subjects = [];
+  rows.forEach(r=>{
+    const name = r.querySelector(".e-subj-name").value.trim();
+    const max = parseFloat(r.querySelector(".e-subj-max").value) || 0;
+    const obtained = parseFloat(r.querySelector(".e-subj-obt").value) || 0;
+    if(name) subjects.push({ name, max, obtained });
+  });
+  const totalMax = subjects.reduce((a,s)=>a+s.max,0);
+  const totalObtained = subjects.reduce((a,s)=>a+s.obtained,0);
+  const passPercentage = parseFloat(document.getElementById("editPassPercent").value) || 33;
+  const percentage = totalMax > 0 ? ((totalObtained/totalMax)*100) : 0;
+  const result = percentage >= passPercentage ? "Pass" : "Fail";
+
+  const updated = {
+    studentName: document.getElementById("editStudentName").value.trim(),
+    fatherName: document.getElementById("editFatherName").value.trim(),
+    motherName: document.getElementById("editMotherName").value.trim(),
+    class: document.getElementById("editClass").value.trim(),
+    rollNo: document.getElementById("editRollNo").value.trim(),
+    schoolName: document.getElementById("editSchoolName").value.trim(),
+    discCode: document.getElementById("editDiscCode").value.trim(),
+    examType: document.getElementById("editExamType").value.trim(),
+    subjects, totalMax, totalObtained,
+    percentage: percentage.toFixed(2), passPercentage, result,
+    remarks: document.getElementById("editRemarks").value.trim()
+  };
+  await fs.updateDoc(fs.doc(db,"marksheets",id), updated);
+  closeModal();
+  await loadTabPage(currentTab, true);
+};
+
+
+/* =====================================================================
+   ADMIN APP - PART 6: TEST RESULTS (view / print / toggle public / delete)
+   ===================================================================== */
+window.viewTestResult = function(id){
+  const r = allTestResults.find(x=>x.id===id); if(!r) return;
+  openModal(testResultHtml(r), true);
+};
+
+window.printTestResult = function(id){
+  const r = allTestResults.find(x=>x.id===id); if(!r) return;
+  printRaw(testResultHtml(r));
+};
+
+window.toggleTestResultPublic = async function(id){
+  const r = allTestResults.find(x=>x.id===id); if(!r) return;
+  await fs.updateDoc(fs.doc(db,"testResults",id), { public: !r.public });
+  await loadTabPage(currentTab, true);
+};
+
+window.deleteTestResult = async function(id){
+  if(!confirm("क्या आप इस Test Result को Delete करना चाहते हैं?")) return;
+  await fs.deleteDoc(fs.doc(db,"testResults",id));
+  await loadTabPage(currentTab, true);
+};
+
+function testResultHtml(r){
+  let subjRows = r.subjects.map(s => `<tr><td>${escapeHtml(s.name)}</td><td>${s.max}</td><td>${s.obtained}</td></tr>`).join("");
+  return `
+    <div class="print-sheet">
+      ${watermarkHtml(r.watermark)}
+      ${topTeacherLineHtml(r.teacherName, r.mobile)}
+      <h2>${escapeHtml(r.instituteName||"")}</h2>
+      <div class="sub">Test Result - ${escapeHtml(r.examType || "")}</div>
+      <div class="print-details">
+        <div><b>Student Name:</b> ${escapeHtml(r.studentName)}</div>
+        <div><b>Roll No.:</b> ${escapeHtml(r.rollNo)}</div>
+        <div><b>Father's Name:</b> ${escapeHtml(r.fatherName)}</div>
+        <div><b>Class:</b> ${escapeHtml(r.class)} &nbsp; <b>Section:</b> ${escapeHtml(r.section)}</div>
+        <div><b>Teacher:</b> ${escapeHtml(r.teacherName||"-")}</div>
+      </div>
+      <table>
+        <tr><th>Subject</th><th>Max Marks</th><th>Obtained Marks</th></tr>
+        ${subjRows}
+        <tr><td><b>Total</b></td><td><b>${r.totalMax}</b></td><td><b>${r.totalObtained}</b></td></tr>
+      </table>
+      <p style="margin-top:10px;"><b>Percentage:</b> ${r.percentage}% &nbsp; | &nbsp; <b>Pass Percentage:</b> ${r.passPercentage}%</p>
+      <div class="result-badge ${r.result === "Pass" ? "result-pass" : "result-fail"}">Result: ${r.result}</div>
+      <div class="sign-row"><div>Class Teacher Signature</div><div>Principal Signature</div></div>
+    </div>
+  `;
+}
+
+
+/* =====================================================================
+   SHARED HELPERS
+   ===================================================================== */
+function openModal(innerHtml, closableOnly){
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "activeModal";
+  overlay.innerHTML = `<div class="modal-box">${innerHtml}${closableOnly ? `<div class="footer-actions"><button class="btn btn-outline btn-sm" onclick="closeModal()">Close</button></div>` : ""}</div>`;
+  document.getElementById("modalRoot").appendChild(overlay);
+}
+window.closeModal = function(){
+  const m = document.getElementById("activeModal");
+  if(m) m.remove();
+};
+
+function printRaw(html){
+  document.getElementById("printArea").innerHTML = html;
+  window.print();
+}
+
+function watermarkHtml(text){
+  if(!text) return "";
+  return `<div class="print-watermark">${escapeHtml(text)}</div>`;
+}
+function topTeacherLineHtml(teacherName, mobile){
+  if(!teacherName && !mobile) return "";
+  return `<div class="print-top-teacher-line">${escapeHtml(teacherName || "")}${mobile ? " &nbsp;|&nbsp; Mobile: " + escapeHtml(mobile) : ""}</div>`;
+}
+
+function marksheetHtml(d){
+  let subjRows = d.subjects.map(s => `<tr><td>${escapeHtml(s.name)}</td><td>${s.max}</td><td>${s.obtained}</td></tr>`).join("");
+  return `
+    <div class="print-sheet">
+      ${watermarkHtml(d.watermark)}
+      ${topTeacherLineHtml(d.teacherName, d.teacherMobile)}
+      <h2>${escapeHtml(d.schoolName || "School Name")}</h2>
+      <div class="sub">Mark Sheet - ${escapeHtml(d.examType || "")}</div>
+      <div class="print-details">
+        <div><b>Student Name:</b> ${escapeHtml(d.studentName)}</div>
+        <div><b>Roll No.:</b> ${escapeHtml(d.rollNo)}</div>
+        <div><b>Father's Name:</b> ${escapeHtml(d.fatherName)}</div>
+        <div><b>Class:</b> ${escapeHtml(d.class)}</div>
+        ${d.motherName ? `<div><b>Mother's Name:</b> ${escapeHtml(d.motherName)}</div>` : ""}
+        ${d.discCode ? `<div><b>Disc Code:</b> ${escapeHtml(d.discCode)}</div>` : ""}
+        <div><b>Teacher:</b> ${escapeHtml(d.teacherName||"-")}</div>
+      </div>
+      <table>
+        <tr><th>Subject</th><th>Max Marks</th><th>Obtained Marks</th></tr>
+        ${subjRows}
+        <tr><td><b>Total</b></td><td><b>${d.totalMax}</b></td><td><b>${d.totalObtained}</b></td></tr>
+      </table>
+      <p style="margin-top:10px;"><b>Percentage:</b> ${d.percentage}% &nbsp; | &nbsp; <b>Pass Percentage:</b> ${d.passPercentage}%</p>
+      ${d.remarks ? `<p><b>Remarks:</b> ${escapeHtml(d.remarks)}</p>` : ""}
+      <div class="result-badge ${d.result === "Pass" ? "result-pass" : "result-fail"}">Result: ${d.result}</div>
+      <div class="sign-row"><div>Class Teacher Signature</div><div>Principal Signature</div></div>
+    </div>
+  `;
+}
+
+function escapeHtml(str){ if(!str) return ""; return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function escapeAttr(str){ if(!str) return ""; return String(str).replace(/"/g,"&quot;"); }
+function formatDate(iso){ if(!iso) return "-"; const d = new Date(iso); return d.toLocaleDateString() + " " + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
+
+// [बदलाव — Premium QR Code] QR Code Image को PNG के रूप में Resize करके Data URL बनाना —
+// जानबूझकर JPEG नहीं (JPEG की Compression से QR के बारीक Black/White Square धुंधले होकर
+// Scan होना बंद हो सकते हैं; PNG में हर Pixel साफ़ रहता है)।
+function resizeImageToDataUrlPng(file, maxDim){
+  maxDim = maxDim || 500;
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("फ़ाइल पढ़ने में समस्या आई"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("यह एक सही Image फ़ाइल नहीं लगती"));
+      img.onload = () => {
+        let { width, height } = img;
+        if(width > height && width > maxDim){ height = Math.round(height * (maxDim / width)); width = maxDim; }
+        else if(height > maxDim){ width = Math.round(width * (maxDim / height)); height = maxDim; }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+</script>
+</body>
+</html>
